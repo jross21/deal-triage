@@ -1,0 +1,23 @@
+Call Date: 2026-05-15
+Account: Tidal Software
+Participants: Riley Osei (AE), Nathan Becker — VP of Revenue, Tidal Software
+
+Riley Osei: Where are we on the final decision? Last time we spoke, you said you were close.
+
+Nathan Becker: We are close. But I have to tell you — Salesforce came back with a revised proposal last week. They're bundling their pipeline intelligence tool as part of our existing CRM renewal, which makes the pricing conversation very different.
+
+Riley Osei: What's the bundle discount they're offering?
+
+Nathan Becker: It's hard to compare because it's embedded in the platform renewal. My CFO's perspective is that it feels "free" since we're already paying for Salesforce. Which isn't really true, but that's how it reads on paper.
+
+Riley Osei: Are their capabilities comparable to what I showed you?
+
+Nathan Becker: Honestly, no. The Salesforce version is much more basic — no natural language explanations, no transcript integration, weaker heuristic logic. But my CFO doesn't care about those differences. He sees it as "good enough."
+
+Riley Osei: What would it take to justify the additional spend internally?
+
+Nathan Becker: I need to quantify the value gap. If I can show that your product would recover even two or three deals per quarter that their version would miss, that's a compelling ROI story. Can you help me build that case?
+
+Riley Osei: Absolutely. Send me your average deal size and I'll model it out. I can also put together a direct feature comparison doc you can use internally.
+
+Nathan Becker: Do that. I want to fight for this, but I need ammunition.

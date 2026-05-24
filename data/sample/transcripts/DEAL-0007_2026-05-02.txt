@@ -1,0 +1,21 @@
+Call Date: 2026-05-02
+Account: Basalt Networks
+Participants: Riley Osei (AE), Priya Sharma — Head of Revenue Operations, Basalt Networks
+
+Riley Osei: I sent over the proposal last Thursday. Had a chance to look through it?
+
+Priya Sharma: I did, and overall it looks solid. The pricing is in the range we expected. I have a few questions before I take it to my manager — mainly around the SLA section.
+
+Riley Osei: Sure, what's on your mind?
+
+Priya Sharma: The 99.5% uptime commitment — is that measured monthly or annually? And what does the remediation look like if you miss it? We're in HealthTech, so our compliance team will ask about data residency and incident response times.
+
+Riley Osei: Monthly measurement, and the remediation is a service credit prorated to the downtime. For data residency, we're SOC 2 Type II certified and our data stays in US regions by default — I can get you the full compliance package.
+
+Priya Sharma: That's helpful. The other thing is implementation — the proposal mentions a four-week onboarding. Is there a faster path if we're willing to do more of the legwork ourselves?
+
+Riley Osei: We can usually get customers to first value in two weeks if you have a dedicated internal project contact. I can structure the proposal to offer both timelines so your team can choose.
+
+Priya Sharma: I like that. One more thing — do you have any customers in our space I could talk to? A reference call would go a long way with my manager.
+
+Riley Osei: I'll line up two references this week.

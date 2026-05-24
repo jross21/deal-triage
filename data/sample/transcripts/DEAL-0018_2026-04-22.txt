@@ -1,0 +1,23 @@
+Call Date: 2026-04-22
+Account: Vesper Works
+Participants: Morgan Ellis (AE), Brendan Walsh — RevOps Manager, Vesper Works
+
+Morgan Ellis: Hey, just a quick sync — I know we left last week's call with a few action items. Wanted to make sure we're both on the same page.
+
+Brendan Walsh: Yeah, this is a good check-in. I went back to my team and shared the overview you sent. The feedback was pretty positive — people liked the concept. No major objections yet.
+
+Morgan Ellis: That's good to hear. Did anyone have questions I should address?
+
+Brendan Walsh: One of my ops analysts asked about the data model — specifically how it handles deals that have been re-staged retroactively in the CRM. Like if someone goes back and changes a close date after the fact, does that distort the scoring?
+
+Morgan Ellis: Good catch — we handle that with event-log-based tracking rather than point-in-time snapshots. So retroactive edits don't corrupt the historical risk signal. I can send a technical note on that.
+
+Brendan Walsh: That would be useful, yeah. Otherwise, I'm still working on scheduling time with our head of sales. He's been traveling. I'm targeting next week or the week after.
+
+Morgan Ellis: No rush. Anything I can send that would make that intro conversation more productive?
+
+Brendan Walsh: Maybe a one-pager — something short that explains the problem you solve before getting into features. He responds better to problem statements than product decks.
+
+Morgan Ellis: I'll tailor something to that framing and send it over today.
+
+Brendan Walsh: Perfect. Let's plan to reconnect once I've got him lined up. Should be within two weeks.
