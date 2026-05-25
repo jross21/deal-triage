@@ -39,56 +39,70 @@ def find_transcript(deal_id):
 # Scoring
 # ---------------------------------------------------------------------------
 
-def compute_risk_score(row):
-    """Return a 0–100 risk score. Higher means more at-risk."""
-    score = 0
+def compute_risk_breakdown(row):
+    """Return (total_score, breakdown_dict) for a deal row.
+
+    breakdown_dict keys: stage_pts (max 40), act_pts (max 30), close_pts (max 30).
+    """
     stage = row.get("stage", "")
+    threshold = STAGE_THRESHOLDS.get(stage, 14)
 
     # 1. Days in stage — max 40 pts (linear to 2× stage threshold)
-    threshold = STAGE_THRESHOLDS.get(stage, 14)
     try:
         days_in = int(row.get("days_in_stage", 0))
     except (ValueError, TypeError):
         days_in = 0
-    score += min(40, int(days_in / threshold * 20))
+    stage_pts = min(40, int(days_in / threshold * 20))
 
     # 2. Activity recency — max 30 pts
     try:
         last_act = date.fromisoformat(str(row["last_activity_date"]))
         stale = max(0, (TODAY - last_act).days)
         if stale >= 21:
-            score += 30
+            act_pts = 30
         elif stale >= 14:
-            score += 22
+            act_pts = 22
         elif stale >= 7:
-            score += 14
+            act_pts = 14
         else:
-            score += int(stale / 7 * 14)
+            act_pts = int(stale / 7 * 14)
     except (ValueError, TypeError, KeyError):
-        score += 15
+        act_pts = 15
 
     # 3. Close date pressure — max 30 pts
     try:
         close = date.fromisoformat(str(row["close_date"]))
         days_until = (close - TODAY).days
         if days_until < 0:
-            score += 30
+            close_pts = 30
         elif days_until < 14:
-            score += 25
+            close_pts = 25
         elif days_until <= 30:
-            score += 15
+            close_pts = 15
         elif days_until <= 60:
-            score += 5
+            close_pts = 5
+        else:
+            close_pts = 0
     except (ValueError, TypeError, KeyError):
-        score += 10
+        close_pts = 10
 
-    return min(100, score)
+    total = min(100, stage_pts + act_pts + close_pts)
+    return total, {"stage_pts": stage_pts, "act_pts": act_pts, "close_pts": close_pts}
+
+
+def compute_risk_score(row):
+    """Return a 0–100 risk score. Higher means more at-risk."""
+    return compute_risk_breakdown(row)[0]
 
 
 def score_deals(df):
-    """Filter to open stages, compute risk scores, return sorted descending."""
+    """Filter to open stages, compute risk scores and breakdowns, return sorted descending."""
     open_df = df[df["stage"].isin(OPEN_STAGES)].copy()
-    open_df["risk_score"] = open_df.apply(lambda r: compute_risk_score(r.to_dict()), axis=1)
+    results = open_df.apply(lambda r: compute_risk_breakdown(r.to_dict()), axis=1)
+    open_df["risk_score"] = results.apply(lambda x: x[0])
+    open_df["_stage_pts"] = results.apply(lambda x: x[1]["stage_pts"])
+    open_df["_act_pts"]   = results.apply(lambda x: x[1]["act_pts"])
+    open_df["_close_pts"] = results.apply(lambda x: x[1]["close_pts"])
     return open_df.sort_values("risk_score", ascending=False).reset_index(drop=True)
 
 
@@ -121,6 +135,7 @@ def get_claude_explanation(row, transcript=""):
         f"- Industry: {row['industry']}",
         f"- Employee Count: {int(row['employee_count']):,}",
         f"- Risk Score: {row['risk_score']}/100",
+        f"- Score breakdown: Stage {row.get('_stage_pts', 0)}/40 · Activity {row.get('_act_pts', 0)}/30 · Close {row.get('_close_pts', 0)}/30",
     ])
 
     transcript_section = (
@@ -193,6 +208,43 @@ c3.metric("Open Pipeline", f"${int(scored['amount'].sum()):,}")
 st.divider()
 
 # ---------------------------------------------------------------------------
+# Pipeline health chart
+# ---------------------------------------------------------------------------
+import altair as alt
+
+st.subheader("Pipeline Health")
+
+_STAGE_ORDER = ["Discovery", "Demo", "Proposal", "Negotiation"]
+_TIER_COLORS = ["#ef4444", "#f59e0b", "#22c55e"]
+
+def _risk_tier(score):
+    return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
+
+chart_df = scored.copy()
+chart_df["Risk Tier"] = chart_df["risk_score"].apply(_risk_tier)
+chart_df["stage"] = pd.Categorical(chart_df["stage"], categories=_STAGE_ORDER, ordered=True)
+
+pipeline_chart = (
+    alt.Chart(chart_df)
+    .mark_bar()
+    .encode(
+        x=alt.X("stage:O", sort=_STAGE_ORDER, title="Stage"),
+        y=alt.Y("count():Q", title="Deals"),
+        color=alt.Color(
+            "Risk Tier:N",
+            scale=alt.Scale(domain=["High", "Medium", "Low"], range=_TIER_COLORS),
+            legend=alt.Legend(title="Risk Tier"),
+        ),
+        order=alt.Order("Risk Tier:N", sort="ascending"),
+        tooltip=["stage:O", "Risk Tier:N", "count():Q"],
+    )
+    .properties(height=240)
+)
+st.altair_chart(pipeline_chart, use_container_width=True)
+
+st.divider()
+
+# ---------------------------------------------------------------------------
 # Summary table
 # ---------------------------------------------------------------------------
 st.subheader("Top 10 At-Risk Deals")
@@ -248,6 +300,12 @@ for rank, (_, row) in enumerate(top10.iterrows(), start=1):
         m1.metric("Amount", f"${int(row['amount']):,}")
         m2.metric("Days in Stage", int(row["days_in_stage"]))
         m3.metric("Close Date", str(row["close_date"]))
+
+        st.caption(
+            f"Stage stagnation: {int(row['_stage_pts'])}/40  ·  "
+            f"Activity gap: {int(row['_act_pts'])}/30  ·  "
+            f"Close pressure: {int(row['_close_pts'])}/30"
+        )
 
         next_step = row.get("next_step") or "—"
         st.write(f"**Owner:** {row['owner']}  |  **Next Step:** {next_step}")
