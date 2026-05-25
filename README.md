@@ -2,7 +2,7 @@
 
 B2B SaaS pipeline risk scoring — heuristic signals + Claude explanations for AEs and RevOps managers.
 
-<!-- screenshot here -->
+![Deal Triage screenshot](docs/assets/screenshot.png)
 
 ## What it does
 

@@ -192,18 +192,41 @@ else:
     st.stop()
 
 # ---------------------------------------------------------------------------
+# Validate CSV columns
+# ---------------------------------------------------------------------------
+REQUIRED_COLS = {
+    "deal_id", "account_name", "stage", "amount", "close_date",
+    "days_in_stage", "last_activity_date", "owner", "industry", "employee_count",
+}
+missing = REQUIRED_COLS - set(df_raw.columns)
+if missing:
+    st.error(
+        f"CSV is missing required columns: **{', '.join(sorted(missing))}**  \n"
+        "See the README for the full column spec."
+    )
+    st.stop()
+
+# ---------------------------------------------------------------------------
 # Score and rank
 # ---------------------------------------------------------------------------
 scored = score_deals(df_raw)
-top10 = scored.head(TOP_N).copy()
+
+# ---------------------------------------------------------------------------
+# Sidebar — owner filter
+# ---------------------------------------------------------------------------
+all_owners = sorted(scored["owner"].unique().tolist())
+selected_owner = st.sidebar.selectbox("Filter by owner", ["All"] + all_owners)
+filtered = scored[scored["owner"] == selected_owner] if selected_owner != "All" else scored
+
+top10 = filtered.head(TOP_N).copy()
 
 # ---------------------------------------------------------------------------
 # Summary metrics
 # ---------------------------------------------------------------------------
 c1, c2, c3 = st.columns(3)
-c1.metric("Open Deals", len(scored))
-c2.metric("Top At-Risk", min(TOP_N, len(scored)))
-c3.metric("Open Pipeline", f"${int(scored['amount'].sum()):,}")
+c1.metric("Open Deals", len(filtered))
+c2.metric("Top At-Risk", min(TOP_N, len(filtered)))
+c3.metric("Open Pipeline", f"${int(filtered['amount'].sum()):,}")
 
 st.divider()
 
@@ -220,7 +243,7 @@ _TIER_COLORS = ["#ef4444", "#f59e0b", "#22c55e"]
 def _risk_tier(score):
     return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
 
-chart_df = scored.copy()
+chart_df = filtered.copy()
 chart_df["Risk Tier"] = chart_df["risk_score"].apply(_risk_tier)
 chart_df["stage"] = pd.Categorical(chart_df["stage"], categories=_STAGE_ORDER, ordered=True)
 
