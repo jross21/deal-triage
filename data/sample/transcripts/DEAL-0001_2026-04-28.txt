@@ -1,19 +1,19 @@
 Call Date: 2026-04-28
 Account: Harbor Systems
-Participants: Casey Park (AE), Mira Kovacs — Head of Sales Strategy, Harbor Systems
+Participants: Sonny Rollins (AE), Mira Kovacs — Head of Sales Strategy, Harbor Systems
 
-Casey Park: Thanks for the demo time. What were your thoughts after seeing the product?
+Sonny Rollins: Thanks for the demo time. What were your thoughts after seeing the product?
 
 Mira Kovacs: Honestly, the product is well-built and the UX is clean. My concern is I took it to our engineering team and they pushed back pretty hard. Their position is that we could build something like this internally in about six weeks.
 
-Casey Park: What would they scope in?
+Sonny Rollins: What would they scope in?
 
 Mira Kovacs: Basic scoring logic on CRM fields, a simple dashboard, maybe some automated alerts. They're not planning to do the natural language explanations part — our CTO thinks that's a nice-to-have.
 
-Casey Park: So if their build takes six weeks and costs the equivalent of two to three months of engineer time — does that compare favorably to an annual subscription?
+Sonny Rollins: So if their build takes six weeks and costs the equivalent of two to three months of engineer time — does that compare favorably to an annual subscription?
 
 Mira Kovacs: On paper, yes. But I'm skeptical of the timeline. We've had "six-week internal projects" that turned into eight-month projects. The real question my team is asking is whether your product does things we genuinely couldn't replicate.
 
-Casey Park: The integrations take months to get right — Gong, HubSpot, pipeline stage history, data normalization. That's the part that usually breaks internal builds. I can walk your CTO through the architecture if that would help frame the comparison.
+Sonny Rollins: The integrations take months to get right — Gong, HubSpot, pipeline stage history, data normalization. That's the part that usually breaks internal builds. I can walk your CTO through the architecture if that would help frame the comparison.
 
 Mira Kovacs: That might be worth doing. I'm not ready to close the door on this. Can you send me a build-vs-buy comparison doc I could share internally?

@@ -20,7 +20,7 @@ from pathlib import Path
 # Configuration
 # ---------------------------------------------------------------------------
 SEED = 42
-TODAY = date(2026, 5, 24)
+TODAY = date(2026, 5, 26)
 
 ROOT = Path(__file__).parent.parent
 OUT_DIR = ROOT / "data" / "sample"
@@ -58,8 +58,8 @@ _INDUSTRIES = [
 ]
 
 _OWNERS = [
-    "Jordan Avery", "Sam Chu", "Morgan Ellis",
-    "Riley Osei", "Casey Park", "Alex Tremblay",
+    "Miles Davis", "Charlie Parker", "Dizzy Gillespie",
+    "John Coltrane", "Sonny Rollins", "Thelonious Monk",
 ]
 
 _HEALTHY_NEXT_STEPS = [
@@ -117,9 +117,24 @@ def _make_deal(idx, account_name, stage, tier):
     amount = _deal_size()
 
     if tier == "at_risk":
-        days_in = random.randint(36, 90)
-        act_ago = random.randint(22, 60)
-        close_off = random.randint(-30, 14)
+        profile = random.choices(
+            ["stage_stalled", "ghost", "crunch"], weights=[5, 5, 4]
+        )[0]
+        if profile == "stage_stalled":
+            # Stalled in stage, AE still engaged, close date not urgent
+            days_in = random.randint(36, 80)
+            act_ago = random.randint(2, 8)
+            close_off = random.randint(30, 90)
+        elif profile == "ghost":
+            # Moderate stagnation, prospect has gone completely silent
+            days_in = random.randint(18, 35)
+            act_ago = random.randint(22, 55)
+            close_off = random.randint(10, 30)
+        else:  # crunch
+            # Not badly stalled, but close date is imminent or past
+            days_in = random.randint(14, 28)
+            act_ago = random.randint(8, 18)
+            close_off = random.randint(-20, 7)
         nxt = random.choice(_ATRISK_NEXT_STEPS)
     elif tier == "healthy":
         days_in = random.randint(1, 11)
@@ -127,9 +142,9 @@ def _make_deal(idx, account_name, stage, tier):
         close_off = random.randint(21, 84)
         nxt = random.choice(_HEALTHY_NEXT_STEPS)
     elif tier == "ambiguous":
-        days_in = random.randint(14, 35)
-        act_ago = random.randint(7, 20)
-        close_off = random.randint(7, 28)
+        days_in = random.randint(10, 22)
+        act_ago = random.randint(5, 16)
+        close_off = random.randint(14, 50)
         nxt = random.choice(_AMBIGUOUS_NEXT_STEPS)
     elif tier == "closed_won":
         days_in = random.randint(5, 60)

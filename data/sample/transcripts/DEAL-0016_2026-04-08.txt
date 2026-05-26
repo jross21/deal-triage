@@ -1,19 +1,19 @@
 Call Date: 2026-04-08
 Account: Stratum Commerce
-Participants: Casey Park (AE), Sarah Okonkwo — VP of Revenue Operations, Stratum Commerce
+Participants: Miles Davis (AE), Sarah Okonkwo — VP of Revenue Operations, Stratum Commerce
 
-Casey Park: Thanks for making time today. I wanted to check in after you had a chance to review the overview doc.
+Miles Davis: Thanks for making time today. I wanted to check in after you had a chance to review the overview doc.
 
 Sarah Okonkwo: Honestly, this is exactly what we've been looking for. The pipeline scoring piece — I've been doing that manually in a spreadsheet and it takes my team half a day every week. The fact that you're pulling in activity signals automatically is a game-changer for us.
 
-Casey Park: Is this something you'd want to bring in before your Q3 planning cycle?
+Miles Davis: Is this something you'd want to bring in before your Q3 planning cycle?
 
 Sarah Okonkwo: A hundred percent. I talked to our CRO about it last night and he said, and I'm quoting here, "if it does what you say it does, just do it." I need to loop in our IT team on the Gong integration — do you have a security overview doc I can share with them?
 
-Casey Park: Absolutely, I'll send that over today. And I can set up a thirty-minute call with our solutions engineer if that would help move things along faster.
+Miles Davis: Absolutely, I'll send that over today. And I can set up a thirty-minute call with our solutions engineer if that would help move things along faster.
 
 Sarah Okonkwo: Yes, let me pull in our head of IT and we can find a time next week. I also want to make sure procurement gets looped in early — what's the typical contract length?
 
-Casey Park: Standard is annual with an option for multi-year at a slight discount. I can include a few scenarios in the proposal so your team has options to bring to finance.
+Miles Davis: Standard is annual with an option for multi-year at a slight discount. I can include a few scenarios in the proposal so your team has options to bring to finance.
 
 Sarah Okonkwo: Perfect. Send the security doc, the proposal scenarios, and let's book that IT call. I want to have something in front of my boss before the end of the month.
