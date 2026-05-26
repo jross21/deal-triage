@@ -169,8 +169,64 @@ def get_claude_explanation(row, transcript=""):
 # Page setup
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="Deal Triage", layout="wide")
-st.header("Deal Triage")
-st.caption("Upload your CRM export to surface deals most likely to slip this quarter.")
+
+st.markdown("""<style>
+/* ── Hide Streamlit chrome ── */
+#MainMenu, footer { visibility: hidden; }
+[data-testid="stToolbar"] { display: none; }
+.stDeployButton { display: none !important; }
+
+/* ── App shell ── */
+.main .block-container { padding-top: 2.5rem; padding-bottom: 3rem; max-width: 1080px; }
+.stApp { background: #f8fafc; }
+
+/* ── Metric cards ── */
+[data-testid="stMetric"] {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+}
+[data-testid="stMetricLabel"] > div {
+    color: #64748b !important;
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+}
+[data-testid="stMetricValue"] > div {
+    color: #0f172a !important;
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] { background: #0f172a !important; }
+[data-testid="stSidebar"] label {
+    color: #94a3b8 !important;
+    font-size: 0.65rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* ── Deal expanders ── */
+[data-testid="stExpander"] {
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+}
+[data-testid="stExpander"] summary { font-weight: 500; }
+
+/* ── Hide dividers — spacing handled by padding ── */
+hr { display: none !important; }
+</style>""", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="padding:0 0 1.5rem 0">
+  <div style="font-size:1.75rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;line-height:1.2">Deal Triage</div>
+  <div style="color:#64748b;margin-top:0.35rem;font-size:0.9rem">Upload your CRM export to surface deals most likely to slip this quarter.</div>
+</div>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Data loading
@@ -238,7 +294,7 @@ import altair as alt
 st.subheader("Pipeline Health")
 
 _STAGE_ORDER = ["Discovery", "Demo", "Proposal", "Negotiation"]
-_TIER_COLORS = ["#ef4444", "#f59e0b", "#22c55e"]
+_TIER_COLORS = ["#dc2626", "#d97706", "#16a34a"]
 
 def _risk_tier(score):
     return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
@@ -278,7 +334,27 @@ table_df.insert(0, "#", range(1, len(table_df) + 1))
 table_df["amount"] = table_df["amount"].apply(lambda v: f"${int(v):,}")
 table_df.columns = ["#", "Account", "Stage", "Amount",
                     "Close Date", "Days in Stage", "Risk Score", "Owner"]
-st.dataframe(table_df, use_container_width=True, hide_index=True)
+st.dataframe(
+    table_df,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        "#":             st.column_config.NumberColumn(width="small"),
+        "Account":       st.column_config.TextColumn(width="medium"),
+        "Stage":         st.column_config.TextColumn(width="small"),
+        "Amount":        st.column_config.TextColumn(width="small"),
+        "Close Date":    st.column_config.TextColumn(width="small"),
+        "Days in Stage": st.column_config.NumberColumn(width="small"),
+        "Risk Score":    st.column_config.ProgressColumn(
+                             "Risk Score",
+                             min_value=0,
+                             max_value=100,
+                             format="%d",
+                             width="medium",
+                         ),
+        "Owner":         st.column_config.TextColumn(width="small"),
+    },
+)
 
 # ---------------------------------------------------------------------------
 # Claude analysis
@@ -314,7 +390,11 @@ else:
 # ---------------------------------------------------------------------------
 st.subheader("Deal Detail")
 
-CONFIDENCE_BADGE = {"High": "🔴 High", "Medium": "🟡 Medium", "Low": "🟢 Low"}
+CONFIDENCE_BADGE = {
+    "High":   '<span style="background:#fee2e2;color:#b91c1c;padding:2px 12px;border-radius:99px;font-size:0.75rem;font-weight:600">High</span>',
+    "Medium": '<span style="background:#fef3c7;color:#92400e;padding:2px 12px;border-radius:99px;font-size:0.75rem;font-weight:600">Medium</span>',
+    "Low":    '<span style="background:#dcfce7;color:#166534;padding:2px 12px;border-radius:99px;font-size:0.75rem;font-weight:600">Low</span>',
+}
 
 for rank, (_, row) in enumerate(top10.iterrows(), start=1):
     label = f"#{rank} — {row['account_name']}  ·  {row['stage']}  ·  Risk score: {row['risk_score']}/100"
@@ -337,8 +417,8 @@ for rank, (_, row) in enumerate(top10.iterrows(), start=1):
         explanation = st.session_state.explanations.get(row["deal_id"])
         if explanation:
             st.markdown("---")
-            confidence_label = CONFIDENCE_BADGE.get(explanation.get("confidence", ""), "⚪ Unknown")
-            st.markdown(f"**Confidence:** {confidence_label}")
+            confidence_label = CONFIDENCE_BADGE.get(explanation.get("confidence", ""), "<span>Unknown</span>")
+            st.markdown(f"**Confidence:** {confidence_label}", unsafe_allow_html=True)
             st.markdown(f"**Risk:** {explanation.get('risk_explanation', '')}")
             st.markdown(f"**Suggested action this week:** {explanation.get('next_action', '')}")
         elif st.session_state.explanations:
