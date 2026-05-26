@@ -20,6 +20,7 @@ PROMPT_DIR = Path("prompts")
 TOP_N = 10
 OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
 STAGE_THRESHOLDS = {"Discovery": 14, "Demo": 14, "Proposal": 21, "Negotiation": 21}
+MIN_BENCHMARK_SAMPLE = 5  # stages with fewer rows fall back to STAGE_THRESHOLDS defaults
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -39,13 +40,31 @@ def find_transcript(deal_id):
 # Scoring
 # ---------------------------------------------------------------------------
 
-def compute_risk_breakdown(row):
+def compute_stage_benchmarks(df):
+    """Compute median days_in_stage per stage from full pipeline history.
+
+    Uses all rows (open + closed) for a richer baseline. Falls back to
+    STAGE_THRESHOLDS defaults for stages with fewer than MIN_BENCHMARK_SAMPLE rows.
+    """
+    benchmarks = dict(STAGE_THRESHOLDS)
+    for stage, group in df.groupby("stage"):
+        if len(group) >= MIN_BENCHMARK_SAMPLE:
+            try:
+                median = int(group["days_in_stage"].median())
+                if median > 0:
+                    benchmarks[stage] = median
+            except (TypeError, ValueError):
+                pass
+    return benchmarks
+
+
+def compute_risk_breakdown(row, benchmarks=None):
     """Return (total_score, breakdown_dict) for a deal row.
 
     breakdown_dict keys: stage_pts (max 40), act_pts (max 30), close_pts (max 30).
     """
     stage = row.get("stage", "")
-    threshold = STAGE_THRESHOLDS.get(stage, 14)
+    threshold = (benchmarks or STAGE_THRESHOLDS).get(stage, 14)
 
     # 1. Days in stage — max 40 pts (linear to 2× stage threshold)
     try:
@@ -97,12 +116,14 @@ def compute_risk_score(row):
 
 def score_deals(df):
     """Filter to open stages, compute risk scores and breakdowns, return sorted descending."""
+    benchmarks = compute_stage_benchmarks(df)
     open_df = df[df["stage"].isin(OPEN_STAGES)].copy()
-    results = open_df.apply(lambda r: compute_risk_breakdown(r.to_dict()), axis=1)
-    open_df["risk_score"] = results.apply(lambda x: x[0])
-    open_df["_stage_pts"] = results.apply(lambda x: x[1]["stage_pts"])
-    open_df["_act_pts"]   = results.apply(lambda x: x[1]["act_pts"])
-    open_df["_close_pts"] = results.apply(lambda x: x[1]["close_pts"])
+    results = open_df.apply(lambda r: compute_risk_breakdown(r.to_dict(), benchmarks), axis=1)
+    open_df["risk_score"]    = results.apply(lambda x: x[0])
+    open_df["_stage_pts"]    = results.apply(lambda x: x[1]["stage_pts"])
+    open_df["_act_pts"]      = results.apply(lambda x: x[1]["act_pts"])
+    open_df["_close_pts"]    = results.apply(lambda x: x[1]["close_pts"])
+    open_df["_stage_median"] = open_df["stage"].map(benchmarks)
     return open_df.sort_values("risk_score", ascending=False).reset_index(drop=True)
 
 
@@ -136,6 +157,7 @@ def get_claude_explanation(row, transcript=""):
         f"- Employee Count: {int(row['employee_count']):,}",
         f"- Risk Score: {row['risk_score']}/100",
         f"- Score breakdown: Stage {row.get('_stage_pts', 0)}/40 · Activity {row.get('_act_pts', 0)}/30 · Close {row.get('_close_pts', 0)}/30",
+        f"- Stage benchmark: {int(row.get('_stage_median') or STAGE_THRESHOLDS.get(row['stage'], 14))} days median for {row['stage']}",
     ])
 
     transcript_section = (
@@ -404,11 +426,15 @@ for rank, (_, row) in enumerate(top10.iterrows(), start=1):
         m2.metric("Days in Stage", int(row["days_in_stage"]))
         m3.metric("Close Date", str(row["close_date"]))
 
+        stage_median = int(row.get("_stage_median") or STAGE_THRESHOLDS.get(row["stage"], 14))
+        days_in      = int(row["days_in_stage"])
+        multiple     = f"{days_in / stage_median:.1f}×" if stage_median > 0 else ""
         st.caption(
             f"Stage stagnation: {int(row['_stage_pts'])}/40  ·  "
             f"Activity gap: {int(row['_act_pts'])}/30  ·  "
             f"Close pressure: {int(row['_close_pts'])}/30"
         )
+        st.caption(f"{days_in} days in {row['stage']} — {multiple} the {stage_median}-day median")
 
         next_step = row.get("next_step") or "—"
         st.write(f"**Owner:** {row['owner']}  |  **Next Step:** {next_step}")
