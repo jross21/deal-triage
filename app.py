@@ -304,7 +304,10 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         df_raw = pd.read_csv(uploaded)
     elif SAMPLE_CSV.exists():
         df_raw = pd.read_csv(SAMPLE_CSV)
-        st.info("Showing sample data — upload your own CSV above to analyze real deals.")
+        st.markdown(
+            '<div class="info-banner">ℹ️&nbsp; Showing sample data — upload your own CSV above to analyze real deals.</div>',
+            unsafe_allow_html=True,
+        )
     else:
         st.error(
             f"Sample data not found at `{SAMPLE_CSV}`. "
@@ -349,10 +352,10 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
 
     if len(top10) == 0 and selected_owner != "All":
         owner_total = len(scored[scored["owner"] == selected_owner])
-        st.info(
-            f"No at-risk deals for **{selected_owner}** — "
-            f"{owner_total} open deal{'s' if owner_total != 1 else ''} "
-            f"all scoring below 40."
+        st.markdown(
+            f'<div class="info-banner">ℹ️&nbsp; No at-risk deals for <strong>{selected_owner}</strong> — '
+            f'{owner_total} open deal{"s" if owner_total != 1 else ""} all scoring below 40.</div>',
+            unsafe_allow_html=True,
         )
         st.stop()
 
@@ -498,9 +501,10 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
                     st.session_state.explanations[row["deal_id"]] = result
                 _status.update(label="Analysis complete", state="complete", expanded=False)
     else:
-        st.info(
-            "**AI explanations disabled.** Add `ANTHROPIC_API_KEY=your_key` to `.env` "
-            "and restart to enable Claude-powered risk analysis."
+        st.markdown(
+            '<div class="info-banner">⚠️&nbsp; <strong>AI explanations disabled.</strong> '
+            'Add <code>ANTHROPIC_API_KEY=your_key</code> to <code>.env</code> and restart to enable Claude-powered risk analysis.</div>',
+            unsafe_allow_html=True,
         )
 
     # Export enriched CSV (shown after Claude has run)
