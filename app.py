@@ -20,6 +20,20 @@ METHODOLOGY_MD = Path("METHODOLOGY.md")
 TOP_N = 10
 OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
 STAGE_THRESHOLDS = {"Discovery": 14, "Demo": 14, "Proposal": 21, "Negotiation": 21}
+
+# Per-tier expander border styles (dark mode / light mode)
+_TIER_BORDER = {
+    "dark": {
+        "high":   "border:1px solid rgba(239,68,68,0.35)!important;box-shadow:0 0 20px rgba(239,68,68,0.1),0 2px 8px rgba(0,0,0,0.3)!important;",
+        "medium": "border:1px solid rgba(245,158,11,0.3)!important;box-shadow:0 0 16px rgba(245,158,11,0.08),0 2px 8px rgba(0,0,0,0.3)!important;",
+        "low":    "border:1px solid #334155!important;box-shadow:0 2px 8px rgba(0,0,0,0.2)!important;",
+    },
+    "light": {
+        "high":   "border:1px solid #fca5a5!important;box-shadow:0 2px 8px rgba(239,68,68,0.1)!important;",
+        "medium": "border:1px solid #fde68a!important;box-shadow:0 2px 8px rgba(245,158,11,0.08)!important;",
+        "low":    "border:1px solid #e2e8f0!important;",
+    },
+}
 MIN_BENCHMARK_SAMPLE = 5
 
 
@@ -553,6 +567,17 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         _has_tx = str(row["deal_id"]) in deals_with_transcripts
         label = f"#{rank} — {'🎙 ' if _has_tx else ''}{row['account_name']}  ·  {row['stage']}  ·  Risk score: {row['risk_score']}/100"
         with st.expander(label, expanded=(rank == 1)):
+
+            # Inject risk-tier border via :has() selector scoped to this deal's unique ID
+            _theme_key = "dark" if dark_mode else "light"
+            _tier_key = _risk_tier(row["risk_score"]).lower()
+            _border_css = _TIER_BORDER[_theme_key][_tier_key]
+            st.markdown(
+                f'<style>[data-testid="stExpander"]:has([data-deal-id="{row["deal_id"]}"]) '
+                f'{{ {_border_css} }}</style>'
+                f'<span data-deal-id="{row["deal_id"]}" style="display:none"></span>',
+                unsafe_allow_html=True,
+            )
 
             # Zone 1: CRM signals
             m1, m2, m3 = st.columns(3)
