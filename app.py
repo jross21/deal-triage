@@ -24,16 +24,9 @@ STAGE_THRESHOLDS = {"Discovery": 14, "Demo": 14, "Proposal": 21, "Negotiation": 
 
 # Per-tier expander border styles (dark mode / light mode)
 _TIER_BORDER = {
-    "dark": {
-        "high":   "border:1px solid rgba(239,68,68,0.35)!important;box-shadow:0 0 20px rgba(239,68,68,0.1),0 2px 8px rgba(0,0,0,0.3)!important;",
-        "medium": "border:1px solid rgba(245,158,11,0.3)!important;box-shadow:0 0 16px rgba(245,158,11,0.08),0 2px 8px rgba(0,0,0,0.3)!important;",
-        "low":    "border:1px solid #334155!important;box-shadow:0 2px 8px rgba(0,0,0,0.2)!important;",
-    },
-    "light": {
-        "high":   "border:1px solid #fca5a5!important;box-shadow:0 2px 8px rgba(239,68,68,0.1)!important;",
-        "medium": "border:1px solid #fde68a!important;box-shadow:0 2px 8px rgba(245,158,11,0.08)!important;",
-        "low":    "border:1px solid #e2e8f0!important;",
-    },
+    "high":   "border:1px solid #fca5a5!important;box-shadow:0 2px 8px rgba(239,68,68,0.1)!important;",
+    "medium": "border:1px solid #fde68a!important;box-shadow:0 2px 8px rgba(245,158,11,0.08)!important;",
+    "low":    "border:1px solid #e2e8f0!important;",
 }
 MIN_BENCHMARK_SAMPLE = 5
 
@@ -132,25 +125,7 @@ def score_deals(df):
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="Deal Triage", layout="wide")
 
-# Read theme preference persisted by the toggle widget (default: dark)
-dark_mode = st.session_state.get("dark_mode", True)
-
 # ── CSS constants ──────────────────────────────────────────────────────────
-
-CSS_SIDEBAR = """
-[data-testid="stSidebar"] { background: #0c1425 !important; }
-[data-testid="stSidebar"] label {
-    color: #94a3b8 !important; font-size: 0.65rem !important;
-    text-transform: uppercase; letter-spacing: 0.1em;
-}
-[data-testid="stSidebar"] .stSelectbox > div > div {
-    background: rgba(255,255,255,0.05) !important;
-    border-color: rgba(255,255,255,0.1) !important;
-    color: #94a3b8 !important;
-}
-[data-testid="stSidebar"] p, [data-testid="stSidebar"] div { color: #475569; }
-[data-testid="stSidebar"] .stToggle label { font-size: 0.75rem !important; color: #94a3b8 !important; }
-"""
 
 CSS_SHARED = """
 #MainMenu, footer { visibility: hidden; }
@@ -169,43 +144,7 @@ hr { display: none !important; }
 }
 """
 
-CSS_DARK = """
-.stApp { background: #0f172a !important; }
-[data-testid="stMetric"] {
-    background: #1e293b !important; border: 1px solid #334155 !important;
-    border-radius: 10px !important; padding: 1rem 1.25rem !important;
-    box-shadow: 0 0 0 1px rgba(56,189,248,0.05), 0 2px 8px rgba(0,0,0,0.3) !important;
-}
-[data-testid="stMetricLabel"] > div { color: #94a3b8 !important; }
-[data-testid="stMetricValue"] > div { color: #f1f5f9 !important; }
-[data-testid="stExpander"] {
-    background: #1e293b !important; border: 1px solid #334155 !important;
-    border-radius: 10px !important;
-}
-[data-testid="stExpander"] summary { color: #f1f5f9 !important; }
-[data-baseweb="tab-list"] { border-bottom-color: #1e293b !important; }
-[data-baseweb="tab"] { color: #475569 !important; }
-[aria-selected="true"][data-baseweb="tab"] { color: #38bdf8 !important; border-bottom-color: #38bdf8 !important; }
-[data-testid="stBaseButton-primary"] > button {
-    background: linear-gradient(135deg, #0284c7, #38bdf8) !important;
-    border: none !important; color: white !important; font-weight: 700 !important;
-    box-shadow: 0 0 16px rgba(56,189,248,0.25) !important;
-}
-.chart-card {
-    background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-    padding: 1rem 1.25rem 0.25rem; margin-bottom: 1rem;
-}
-.info-banner {
-    background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.18);
-    border-radius: 8px; padding: 0.65rem 1rem; color: #7dd3fc;
-    font-size: 0.875rem; margin-bottom: 1rem;
-}
-.badge-high   { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-.badge-medium { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
-.badge-low    { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
-"""
-
-CSS_LIGHT = """
+CSS_THEME = """
 .stApp { background: #f8fafc; }
 [data-testid="stMetric"] {
     background: white !important; border: 1px solid #e2e8f0 !important;
@@ -239,15 +178,14 @@ CSS_LIGHT = """
 
 # Inject all CSS
 st.markdown(
-    f"<style>{CSS_SIDEBAR}{CSS_SHARED}{CSS_DARK if dark_mode else CSS_LIGHT}</style>",
+    f"<style>{CSS_SHARED}{CSS_THEME}</style>",
     unsafe_allow_html=True,
 )
 
 # Header
-_title_color = "#f1f5f9" if dark_mode else "#0f172a"
-st.markdown(f"""
+st.markdown("""
 <div style="padding:0 0 1.5rem 0">
-  <div style="font-size:1.75rem;font-weight:800;color:{_title_color};letter-spacing:-0.02em;line-height:1.2">Deal Triage</div>
+  <div style="font-size:1.75rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;line-height:1.2">Deal Triage</div>
   <div style="color:#64748b;margin-top:0.35rem;font-size:0.9rem">Surface and act on the deals most likely to slip this quarter.</div>
 </div>
 """, unsafe_allow_html=True)
@@ -388,8 +326,6 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     ACTIVE_MODEL = (
         "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
     )
-    st.sidebar.divider()
-    st.sidebar.toggle("🌙  Dark mode", value=dark_mode, key="dark_mode")
     st.sidebar.markdown(
         "<div style='padding-top:1rem;color:#334155;font-size:0.65rem;"
         "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v1.5</div>",
@@ -572,9 +508,8 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         with st.expander(label, expanded=(rank == 1)):
 
             # Inject risk-tier border via :has() selector scoped to this deal's unique ID
-            _theme_key = "dark" if dark_mode else "light"
             _tier_key = _risk_tier(row["risk_score"]).lower()
-            _border_css = _TIER_BORDER[_theme_key][_tier_key]
+            _border_css = _TIER_BORDER[_tier_key]
             _safe_id = re.sub(r'[^A-Za-z0-9_-]', '', str(row["deal_id"]))
             st.markdown(
                 f'<style>[data-testid="stExpander"]:has([data-deal-id="{_safe_id}"]) '
@@ -647,9 +582,9 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
 
                 # Verbatim transcript quotes as evidence
                 quotes = [q for q in (analysis.get("quotes") or []) if q]
-                _quote_bg = "rgba(239,68,68,0.06)" if dark_mode else "#fef2f2"
-                _quote_text = "#94a3b8" if dark_mode else "#374151"
-                _quote_attr = "#475569" if dark_mode else "#9ca3af"
+                _quote_bg = "#fef2f2"
+                _quote_text = "#374151"
+                _quote_attr = "#9ca3af"
                 for quote in quotes:
                     st.markdown(
                         f"""<div style="border-left:3px solid #dc2626;padding:8px 14px;
@@ -677,10 +612,10 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
 
                     bpa = analysis.get("buying_process_analysis", "")
                     if bpa:
-                        _bpa_bg     = "#1e293b"  if dark_mode else "#f8fafc"
-                        _bpa_border = "#334155"  if dark_mode else "#e2e8f0"
-                        _bpa_label  = "#475569"  if dark_mode else "#64748b"
-                        _bpa_text   = "#94a3b8"  if dark_mode else "#1e293b"
+                        _bpa_bg     = "#f8fafc"
+                        _bpa_border = "#e2e8f0"
+                        _bpa_label  = "#64748b"
+                        _bpa_text   = "#1e293b"
                         st.markdown(
                             f"""<div style="background:{_bpa_bg};border:1px solid {_bpa_border};
                             border-radius:8px;padding:12px 16px;margin:10px 0">
