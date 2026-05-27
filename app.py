@@ -289,6 +289,18 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     filtered = scored[scored["owner"] == selected_owner] if selected_owner != "All" else scored
     top10 = filtered.head(TOP_N).copy()
 
+    _transcripts = {str(did): find_transcript(str(did)) for did in top10["deal_id"]}
+    deals_with_transcripts = {did for did, t in _transcripts.items() if t}
+
+    if len(top10) == 0 and selected_owner != "All":
+        owner_total = len(scored[scored["owner"] == selected_owner])
+        st.info(
+            f"No at-risk deals for **{selected_owner}** — "
+            f"{owner_total} open deal{'s' if owner_total != 1 else ''} "
+            f"all scoring below 40."
+        )
+        st.stop()
+
     model_choice = st.sidebar.selectbox(
         "Claude model",
         ["Haiku (fast)", "Sonnet (deeper)"],
@@ -296,6 +308,11 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     )
     ACTIVE_MODEL = (
         "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
+    )
+    st.sidebar.markdown(
+        "<div style='padding-top:2rem;color:#475569;font-size:0.65rem;"
+        "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v1.5</div>",
+        unsafe_allow_html=True,
     )
 
     # -----------------------------------------------------------------------
@@ -363,6 +380,10 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     table_df = top10[["account_name", "stage", "amount", "close_date",
                        "days_in_stage", "risk_score", "owner"]].copy()
     table_df.insert(0, "#", range(1, len(table_df) + 1))
+    table_df["account_name"] = [
+        f"🎙 {name}" if str(did) in deals_with_transcripts else name
+        for did, name in zip(top10["deal_id"].values, table_df["account_name"])
+    ]
     table_df["amount"] = table_df["amount"].apply(lambda v: f"${int(v):,}")
     table_df.columns = ["#", "Account", "Stage", "Amount",
                         "Close Date", "Days in Stage", "Risk Score", "Owner"]
@@ -409,11 +430,13 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             )
         if analyze:
             st.session_state.explanations = {}
-            with st.spinner("Analyzing top deals with Claude (~15 seconds)…"):
+            with st.status("Analyzing top deals with Claude…", expanded=True) as _status:
                 for _, row in top10.iterrows():
-                    transcript = find_transcript(str(row["deal_id"]))
+                    _status.write(f"🔍 {row['account_name']}…")
+                    transcript = _transcripts.get(str(row["deal_id"]), "")
                     result = claude_client.analyze_deal(row.to_dict(), transcript, ACTIVE_MODEL)
                     st.session_state.explanations[row["deal_id"]] = result
+                _status.update(label="Analysis complete", state="complete", expanded=False)
     else:
         st.info(
             "**AI explanations disabled.** Add `ANTHROPIC_API_KEY=your_key` to `.env` "
@@ -462,7 +485,8 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     }
 
     for rank, (_, row) in enumerate(top10.iterrows(), start=1):
-        label = f"#{rank} — {row['account_name']}  ·  {row['stage']}  ·  Risk score: {row['risk_score']}/100"
+        _has_tx = str(row["deal_id"]) in deals_with_transcripts
+        label = f"#{rank} — {'🎙 ' if _has_tx else ''}{row['account_name']}  ·  {row['stage']}  ·  Risk score: {row['risk_score']}/100"
         with st.expander(label, expanded=(rank == 1)):
 
             # Zone 1: CRM signals
@@ -482,6 +506,23 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
                 str(row["close_date"]),
                 help="Target close date from CRM. Past-due deals score maximum close date pressure (30/30 pts).",
             )
+            try:
+                _close_d = date.fromisoformat(str(row["close_date"]))
+                _days_until = (_close_d - TODAY).days
+                if _days_until < 0:
+                    m3.markdown(
+                        f"<span style='color:#dc2626;font-size:0.8rem;font-weight:500'>"
+                        f"Past due · {abs(_days_until)}d overdue</span>",
+                        unsafe_allow_html=True,
+                    )
+                elif _days_until < 14:
+                    m3.markdown(
+                        f"<span style='color:#d97706;font-size:0.8rem;font-weight:500'>"
+                        f"{_days_until}d remaining</span>",
+                        unsafe_allow_html=True,
+                    )
+            except (ValueError, TypeError):
+                pass
 
             stage_median = int(row.get("_stage_median") or STAGE_THRESHOLDS.get(row["stage"], 14))
             days_in      = int(row["days_in_stage"])
