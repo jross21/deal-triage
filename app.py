@@ -654,7 +654,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
                     st.markdown(
                         f"""<div style="border-left:3px solid #dc2626;padding:8px 14px;
                         background:{_quote_bg};margin:6px 0 10px 0;border-radius:0 4px 4px 0">
-                        <span style="font-style:italic;color:{_quote_text}">"{quote}"</span><br>
+                        <span style="font-style:italic;color:{_quote_text}">"{html.escape(quote)}"</span><br>
                         <span style="font-size:0.72rem;color:{_quote_attr};margin-top:3px;display:block">— Call transcript</span>
                         </div>""",
                         unsafe_allow_html=True,
@@ -686,7 +686,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
                             border-radius:8px;padding:12px 16px;margin:10px 0">
                             <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;
                             color:{_bpa_label};font-weight:600;margin-bottom:6px">Buying Process Analysis</div>
-                            <div style="color:{_bpa_text};line-height:1.6">{bpa}</div>
+                            <div style="color:{_bpa_text};line-height:1.6">{html.escape(bpa)}</div>
                             </div>""",
                             unsafe_allow_html=True,
                         )
