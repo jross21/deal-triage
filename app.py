@@ -391,7 +391,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     st.sidebar.divider()
     st.sidebar.toggle("🌙  Dark mode", value=dark_mode, key="dark_mode")
     st.sidebar.markdown(
-        "<div style='padding-top:2rem;color:#475569;font-size:0.65rem;"
+        "<div style='padding-top:1rem;color:#334155;font-size:0.65rem;"
         "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v1.5</div>",
         unsafe_allow_html=True,
     )
