@@ -112,61 +112,116 @@ def score_deals(df):
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="Deal Triage", layout="wide")
 
-st.markdown("""<style>
-/* ── Hide Streamlit chrome ── */
+# Read theme preference persisted by the toggle widget (default: dark)
+dark_mode = st.session_state.get("dark_mode", True)
+
+# ── CSS constants ──────────────────────────────────────────────────────────
+
+CSS_SIDEBAR = """
+[data-testid="stSidebar"] { background: #0c1425 !important; }
+[data-testid="stSidebar"] label {
+    color: #94a3b8 !important; font-size: 0.65rem !important;
+    text-transform: uppercase; letter-spacing: 0.1em;
+}
+[data-testid="stSidebar"] .stSelectbox > div > div {
+    background: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+    color: #94a3b8 !important;
+}
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] div { color: #475569; }
+[data-testid="stSidebar"] .stToggle label { font-size: 0.75rem !important; color: #94a3b8 !important; }
+"""
+
+CSS_SHARED = """
 #MainMenu, footer { visibility: hidden; }
 [data-testid="stToolbar"] { display: none; }
 .stDeployButton { display: none !important; }
-
-/* ── App shell ── */
 .main .block-container { padding-top: 2.5rem; padding-bottom: 3rem; max-width: 1080px; }
-.stApp { background: #f8fafc; }
-
-/* ── Metric cards ── */
-[data-testid="stMetric"] {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-}
+hr { display: none !important; }
 [data-testid="stMetricLabel"] > div {
-    color: #64748b !important;
-    font-size: 0.7rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    font-weight: 600;
+    font-size: 0.7rem !important; text-transform: uppercase;
+    letter-spacing: 0.07em; font-weight: 600;
 }
-[data-testid="stMetricValue"] > div {
-    color: #0f172a !important;
-    font-size: 1.75rem !important;
-    font-weight: 700 !important;
+[data-testid="stMetricValue"] > div { font-size: 1.75rem !important; font-weight: 700 !important; }
+[data-testid="stExpander"] summary { font-weight: 600; }
+.badge-high, .badge-medium, .badge-low {
+    padding: 2px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600;
 }
+"""
 
-/* ── Sidebar ── */
-[data-testid="stSidebar"] { background: #0f172a !important; }
-[data-testid="stSidebar"] label {
-    color: #94a3b8 !important;
-    font-size: 0.65rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+CSS_DARK = """
+.stApp { background: #0f172a !important; }
+[data-testid="stMetric"] {
+    background: #1e293b !important; border: 1px solid #334155 !important;
+    border-radius: 10px !important; padding: 1rem 1.25rem !important;
+    box-shadow: 0 0 0 1px rgba(56,189,248,0.05), 0 2px 8px rgba(0,0,0,0.3) !important;
 }
-
-/* ── Deal expanders ── */
+[data-testid="stMetricLabel"] > div { color: #94a3b8 !important; }
+[data-testid="stMetricValue"] > div { color: #f1f5f9 !important; }
 [data-testid="stExpander"] {
-    background: white !important;
-    border: 1px solid #e2e8f0 !important;
+    background: #1e293b !important; border: 1px solid #334155 !important;
     border-radius: 10px !important;
 }
-[data-testid="stExpander"] summary { font-weight: 500; }
+[data-testid="stExpander"] summary { color: #f1f5f9 !important; }
+[data-baseweb="tab-list"] { border-bottom-color: #1e293b !important; }
+[data-baseweb="tab"] { color: #475569 !important; }
+[aria-selected="true"][data-baseweb="tab"] { color: #38bdf8 !important; border-bottom-color: #38bdf8 !important; }
+[data-testid="stBaseButton-primary"] > button {
+    background: linear-gradient(135deg, #0284c7, #38bdf8) !important;
+    border: none !important; color: white !important; font-weight: 700 !important;
+    box-shadow: 0 0 16px rgba(56,189,248,0.25) !important;
+}
+.chart-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+    padding: 1rem 1.25rem 0.25rem; margin-bottom: 1rem;
+}
+.info-banner {
+    background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.18);
+    border-radius: 8px; padding: 0.65rem 1rem; color: #7dd3fc;
+    font-size: 0.875rem; margin-bottom: 1rem;
+}
+.badge-high   { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.badge-medium { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+.badge-low    { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+"""
 
-/* ── Confidence badges ── */
-.badge-high   { background:#fee2e2;color:#b91c1c;padding:2px 12px;border-radius:99px;font-size:0.75rem;font-weight:600 }
-.badge-medium { background:#fef3c7;color:#92400e;padding:2px 12px;border-radius:99px;font-size:0.75rem;font-weight:600 }
-.badge-low    { background:#dcfce7;color:#166534;padding:2px 12px;border-radius:99px;font-size:0.75rem;font-weight:600 }
+CSS_LIGHT = """
+.stApp { background: #f8fafc; }
+[data-testid="stMetric"] {
+    background: white !important; border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important; padding: 1rem 1.25rem !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+[data-testid="stMetricLabel"] > div { color: #64748b !important; }
+[data-testid="stMetricValue"] > div { color: #0f172a !important; }
+[data-testid="stExpander"] {
+    background: white !important; border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+}
+[data-testid="stBaseButton-primary"] > button {
+    background: linear-gradient(135deg, #0284c7, #38bdf8) !important;
+    border: none !important; color: white !important; font-weight: 700 !important;
+}
+.chart-card {
+    background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 1rem 1.25rem 0.25rem; margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.info-banner {
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 0.65rem 1rem; color: #1d4ed8;
+    font-size: 0.875rem; margin-bottom: 1rem;
+}
+.badge-high   { background: #fee2e2; color: #b91c1c; }
+.badge-medium { background: #fef3c7; color: #92400e; }
+.badge-low    { background: #dcfce7; color: #166534; }
+"""
 
-/* ── Hide dividers — spacing handled by padding ── */
-hr { display: none !important; }
-</style>""", unsafe_allow_html=True)
+# Inject all CSS
+st.markdown(
+    f"<style>{CSS_SIDEBAR}{CSS_SHARED}{CSS_DARK if dark_mode else CSS_LIGHT}</style>",
+    unsafe_allow_html=True,
+)
 
 # Header
 st.markdown("""
@@ -309,6 +364,8 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     ACTIVE_MODEL = (
         "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
     )
+    st.sidebar.divider()
+    st.sidebar.toggle("🌙  Dark mode", value=dark_mode, key="dark_mode")
     st.sidebar.markdown(
         "<div style='padding-top:2rem;color:#475569;font-size:0.65rem;"
         "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v1.5</div>",
