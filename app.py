@@ -1,3 +1,4 @@
+import html
 import os
 from datetime import date
 from pathlib import Path
@@ -353,7 +354,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     if len(top10) == 0 and selected_owner != "All":
         owner_total = len(scored[scored["owner"] == selected_owner])
         st.markdown(
-            f'<div class="info-banner">ℹ️&nbsp; No at-risk deals for <strong>{selected_owner}</strong> — '
+            f'<div class="info-banner">ℹ️&nbsp; No at-risk deals for <strong>{html.escape(selected_owner)}</strong> — '
             f'{owner_total} open deal{"s" if owner_total != 1 else ""} all scoring below 40.</div>',
             unsafe_allow_html=True,
         )
