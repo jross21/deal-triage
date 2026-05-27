@@ -404,6 +404,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
 
     st.subheader("Pipeline Health")
+    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
 
     chart_df = filtered.copy()
     chart_df["Risk Tier"] = chart_df["risk_score"].apply(_risk_tier)
@@ -424,8 +425,10 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             tooltip=["stage:O", "Risk Tier:N", "count():Q"],
         )
         .properties(height=240)
+        .configure(background="transparent")
     )
     st.altair_chart(pipeline_chart, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
 
