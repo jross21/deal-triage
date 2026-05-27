@@ -244,9 +244,10 @@ st.markdown(
 )
 
 # Header
-st.markdown("""
+_title_color = "#f1f5f9" if dark_mode else "#0f172a"
+st.markdown(f"""
 <div style="padding:0 0 1.5rem 0">
-  <div style="font-size:1.75rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;line-height:1.2">Deal Triage</div>
+  <div style="font-size:1.75rem;font-weight:800;color:{_title_color};letter-spacing:-0.02em;line-height:1.2">Deal Triage</div>
   <div style="color:#64748b;margin-top:0.35rem;font-size:0.9rem">Surface and act on the deals most likely to slip this quarter.</div>
 </div>
 """, unsafe_allow_html=True)
@@ -646,12 +647,15 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
 
                 # Verbatim transcript quotes as evidence
                 quotes = [q for q in (analysis.get("quotes") or []) if q]
+                _quote_bg = "rgba(239,68,68,0.06)" if dark_mode else "#fef2f2"
+                _quote_text = "#94a3b8" if dark_mode else "#374151"
+                _quote_attr = "#475569" if dark_mode else "#9ca3af"
                 for quote in quotes:
                     st.markdown(
                         f"""<div style="border-left:3px solid #dc2626;padding:8px 14px;
-                        background:#fef2f2;margin:6px 0 10px 0;border-radius:0 4px 4px 0">
-                        <span style="font-style:italic;color:#374151">"{quote}"</span><br>
-                        <span style="font-size:0.72rem;color:#9ca3af;margin-top:3px;display:block">— Call transcript</span>
+                        background:{_quote_bg};margin:6px 0 10px 0;border-radius:0 4px 4px 0">
+                        <span style="font-style:italic;color:{_quote_text}">"{quote}"</span><br>
+                        <span style="font-size:0.72rem;color:{_quote_attr};margin-top:3px;display:block">— Call transcript</span>
                         </div>""",
                         unsafe_allow_html=True,
                     )
@@ -673,12 +677,16 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
 
                     bpa = analysis.get("buying_process_analysis", "")
                     if bpa:
+                        _bpa_bg     = "#1e293b"  if dark_mode else "#f8fafc"
+                        _bpa_border = "#334155"  if dark_mode else "#e2e8f0"
+                        _bpa_label  = "#475569"  if dark_mode else "#64748b"
+                        _bpa_text   = "#94a3b8"  if dark_mode else "#1e293b"
                         st.markdown(
-                            f"""<div style="background:#f8fafc;border:1px solid #e2e8f0;
+                            f"""<div style="background:{_bpa_bg};border:1px solid {_bpa_border};
                             border-radius:8px;padding:12px 16px;margin:10px 0">
                             <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;
-                            color:#64748b;font-weight:600;margin-bottom:6px">Buying Process Analysis</div>
-                            <div style="color:#1e293b;line-height:1.6">{bpa}</div>
+                            color:{_bpa_label};font-weight:600;margin-bottom:6px">Buying Process Analysis</div>
+                            <div style="color:{_bpa_text};line-height:1.6">{bpa}</div>
                             </div>""",
                             unsafe_allow_html=True,
                         )
