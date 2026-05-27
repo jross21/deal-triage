@@ -37,6 +37,10 @@ _TIER_BORDER = {
 MIN_BENCHMARK_SAMPLE = 5
 
 
+def _risk_tier(score):
+    return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -418,9 +422,6 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     _STAGE_ORDER = ["Discovery", "Demo", "Proposal", "Negotiation"]
     _TIER_COLORS = ["#dc2626", "#d97706", "#16a34a"]
 
-    def _risk_tier(score):
-        return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
-
     st.subheader("Pipeline Health")
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
 
@@ -572,10 +573,11 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             _theme_key = "dark" if dark_mode else "light"
             _tier_key = _risk_tier(row["risk_score"]).lower()
             _border_css = _TIER_BORDER[_theme_key][_tier_key]
+            _safe_id = html.escape(str(row["deal_id"]))
             st.markdown(
-                f'<style>[data-testid="stExpander"]:has([data-deal-id="{row["deal_id"]}"]) '
+                f'<style>[data-testid="stExpander"]:has([data-deal-id="{_safe_id}"]) '
                 f'{{ {_border_css} }}</style>'
-                f'<span data-deal-id="{row["deal_id"]}" style="display:none"></span>',
+                f'<span data-deal-id="{_safe_id}" style="display:none"></span>',
                 unsafe_allow_html=True,
             )
 
