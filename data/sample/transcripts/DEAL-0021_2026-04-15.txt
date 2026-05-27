@@ -1,19 +1,19 @@
 Call Date: 2026-04-15
 Account: Umbra Dynamics
-Participants: Casey Park (AE), Marcus Delgado — Director of Sales Operations, Umbra Dynamics
+Participants: Sonny Rollins (AE), Marcus Delgado — Director of Sales Operations, Umbra Dynamics
 
-Casey Park: Now that you've seen the deal scoring dashboard live — what's your reaction?
+Sonny Rollins: Now that you've seen the deal scoring dashboard live — what's your reaction?
 
 Marcus Delgado: I love it. The visual is clean, but what I really care about is the reasoning underneath. When you showed how it weighs days-in-stage against the close date, that's exactly the kind of thing my team argues about in our Monday pipeline reviews.
 
-Casey Park: Does your VP have visibility into that review process?
+Sonny Rollins: Does your VP have visibility into that review process?
 
 Marcus Delgado: She does. I already forwarded her the recording from our first call. She watched it and her note to me was "get this done." So I have full sponsorship at the VP level — I just need to get our head of sales ops aligned, and I think she'll be easy once she sees the Salesforce integration.
 
-Casey Park: Want to pull her into a follow-up session?
+Sonny Rollins: Want to pull her into a follow-up session?
 
 Marcus Delgado: Yeah, let me set that up for next week. I also want to run this by our RevOps analyst — she's the one who'd actually own the day-to-day — and I suspect she'll have opinions about the field mapping. Can we get a sandbox to play with?
 
-Casey Park: I'll provision a trial environment with your Salesforce schema today. You'll have it by EOD.
+Sonny Rollins: I'll provision a trial environment with your Salesforce schema today. You'll have it by EOD.
 
 Marcus Delgado: That's perfect. Honestly, at this point the question for us is implementation timing, not whether we're doing this. I want to be live before our big sales kickoff in August.

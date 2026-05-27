@@ -1,19 +1,19 @@
 Call Date: 2026-04-20
 Account: Quillen Services
-Participants: Morgan Ellis (AE), Kenji Watanabe — RevOps Manager, Quillen Services
+Participants: Thelonious Monk (AE), Kenji Watanabe — RevOps Manager, Quillen Services
 
-Morgan Ellis: Did you and your CFO have a chance to review the proposal?
+Thelonious Monk: Did you and your CFO have a chance to review the proposal?
 
 Kenji Watanabe: We did. I want to be direct with you — the CFO's reaction was that the price is too high. He compared it to what we're paying for our current stack and said we need to come down by at least twenty percent to make this work.
 
-Morgan Ellis: I appreciate you being straight with me. Can you help me understand what he's benchmarking against?
+Thelonious Monk: I appreciate you being straight with me. Can you help me understand what he's benchmarking against?
 
 Kenji Watanabe: He pulled up a couple of alternatives online. I don't think he looked deeply at them, but the number he had in his head was significantly lower than what you quoted. I believe in the product — I've been your champion internally — but I can't take a proposal to finance at this price without a fight.
 
-Morgan Ellis: Is this a budget ceiling issue or a perception-of-value issue? Because those require different conversations.
+Thelonious Monk: Is this a budget ceiling issue or a perception-of-value issue? Because those require different conversations.
 
 Kenji Watanabe: Both, honestly. The budget is real — we're in a hiring freeze and every purchase over a certain threshold requires CFO signature. But it's also partly perception. If I could show him a clear ROI case, I think he'd be more open.
 
-Morgan Ellis: Let me put together a detailed ROI model based on your current pipeline volume and show what the efficiency gain is worth in recovered revenue. Would that help?
+Thelonious Monk: Let me put together a detailed ROI model based on your current pipeline volume and show what the efficiency gain is worth in recovered revenue. Would that help?
 
 Kenji Watanabe: It might. But I'd need it by Friday — he's reviewing all Q2 software spend next week and if we miss that window, this goes to Q3.

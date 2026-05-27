@@ -1,23 +1,23 @@
 Call Date: 2026-05-01
 Account: Ember Cloud
-Participants: Alex Tremblay (AE), Alicia Torres — Head of Operations, Ember Cloud
+Participants: Dizzy Gillespie (AE), Alicia Torres — Head of Operations, Ember Cloud
 
-Alex Tremblay: Before we dive into the demo — you mentioned on our last call that you'd looked at HubSpot. What was your take?
+Dizzy Gillespie: Before we dive into the demo — you mentioned on our last call that you'd looked at HubSpot. What was your take?
 
 Alicia Torres: Their demo was actually pretty impressive. And the pricing came in under our budget ceiling, which matters.
 
-Alex Tremblay: What stood out to you feature-wise?
+Dizzy Gillespie: What stood out to you feature-wise?
 
 Alicia Torres: The native CRM integration is seamless, which makes sense. And their deal health score is built right into the pipeline view — there's no separate dashboard to check. For my team, that's important because we're not going to log into another tool.
 
-Alex Tremblay: How did their AI-generated explanations compare?
+Dizzy Gillespie: How did their AI-generated explanations compare?
 
 Alicia Torres: Honestly, they didn't show us that feature. I'm not sure if it exists at the same depth. What they focused on was workflow automation — when a deal goes at-risk, it automatically creates a task and notifies the AE.
 
-Alex Tremblay: That's a feature we have as well — I should have led with that. Let me show you our integration layer. We sit on top of HubSpot natively, so you'd keep your current workflow and just add the intelligence layer on top.
+Dizzy Gillespie: That's a feature we have as well — I should have led with that. Let me show you our integration layer. We sit on top of HubSpot natively, so you'd keep your current workflow and just add the intelligence layer on top.
 
 Alicia Torres: That's actually news to me. If you integrate with HubSpot rather than replace it, that's a different conversation. Can you show me that specifically?
 
-Alex Tremblay: Yes — pulling it up right now. I think this changes the picture significantly.
+Dizzy Gillespie: Yes — pulling it up right now. I think this changes the picture significantly.
 
 Alicia Torres: Maybe. I'm still evaluating, but I'm open.

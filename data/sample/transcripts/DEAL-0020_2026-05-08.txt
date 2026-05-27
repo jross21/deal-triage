@@ -1,23 +1,23 @@
 Call Date: 2026-05-08
 Account: Meridian Platforms
-Participants: Morgan Ellis (AE), Yuki Nakamura — Chief Revenue Officer, Meridian Platforms
+Participants: Dizzy Gillespie (AE), Yuki Nakamura — Chief Revenue Officer, Meridian Platforms
 
-Morgan Ellis: I know your CTO was going to weigh in on the proposal. Did you hear back from him?
+Dizzy Gillespie: I know your CTO was going to weigh in on the proposal. Did you hear back from him?
 
 Yuki Nakamura: I did. He's cautiously supportive, but he had a bunch of technical questions. His main thing is that he always prefers API access to a closed product. He said — and I'm paraphrasing — "before we buy a black box, I want to know we couldn't build this ourselves in a reasonable amount of time."
 
-Morgan Ellis: That's a fair question. What's his team's bandwidth for a build right now?
+Dizzy Gillespie: That's a fair question. What's his team's bandwidth for a build right now?
 
 Yuki Nakamura: Limited. They're in the middle of a platform migration and have capacity for maybe fifteen to twenty percent time on tooling projects. But he's still asking the question.
 
-Morgan Ellis: We actually have a well-documented API and webhook layer. Some customers use us as a data layer and build their own front-end on top. Would it help if I set up a technical call so your CTO can ask questions directly?
+Dizzy Gillespie: We actually have a well-documented API and webhook layer. Some customers use us as a data layer and build their own front-end on top. Would it help if I set up a technical call so your CTO can ask questions directly?
 
 Yuki Nakamura: Yeah, he'd probably love that actually. He's not trying to block the purchase — he just wants to understand the architecture.
 
-Morgan Ellis: Happy to do it. I'll have our lead engineer on the call. What's the best time?
+Dizzy Gillespie: Happy to do it. I'll have our lead engineer on the call. What's the best time?
 
 Yuki Nakamura: Next Tuesday afternoon works. Can you send over API documentation beforehand so he can come with specific questions?
 
-Morgan Ellis: Already on it. I'll send a technical overview, the API reference, and a few examples of how customers have extended the platform.
+Dizzy Gillespie: Already on it. I'll send a technical overview, the API reference, and a few examples of how customers have extended the platform.
 
 Yuki Nakamura: Perfect. I think once he's satisfied, we're on track to close before end of quarter.

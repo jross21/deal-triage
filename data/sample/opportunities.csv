@@ -1,101 +1,101 @@
 deal_id,account_name,stage,amount,close_date,days_in_stage,last_activity_date,next_step,owner,industry,employee_count
-DEAL-0001,Harbor Systems,Demo,20000,2026-05-22,73,2026-04-26,Reconnect next week,Casey Park,HealthTech,688
-DEAL-0002,Jasper Data,Proposal,65000,2026-06-20,23,2026-05-10,Follow up on proposal,Sam Chu,PropTech,183
-DEAL-0003,Kelvin Software,Negotiation,35000,2026-06-24,8,2026-05-24,Share implementation timeline with champion,Jordan Avery,Manufacturing,7985
-DEAL-0004,Zinc Services,Negotiation,20000,2026-07-25,10,2026-05-19,Complete security questionnaire,Casey Park,HR Tech,120
-DEAL-0005,Torque Software,Closed Lost,35000,2026-05-04,49,2026-04-30,,Casey Park,Cybersecurity,179
-DEAL-0006,Seraph Cloud,Negotiation,40000,2026-05-23,62,2026-04-11,Check in,Alex Tremblay,MarTech,434
-DEAL-0007,Basalt Networks,Proposal,30000,2026-08-13,3,2026-05-19,Schedule technical deep-dive with IT team,Riley Osei,HealthTech,130
-DEAL-0008,Vertex Networks,Closed Won,25000,2026-05-15,52,2026-04-02,Kickoff scheduled,Jordan Avery,HealthTech,74
-DEAL-0009,Wren Analytics,Discovery,15000,2026-06-21,27,2026-05-12,Reconnect in two weeks,Sam Chu,Cybersecurity,193
-DEAL-0010,Ember Cloud,Demo,30000,2026-05-30,58,2026-04-26,Reconnect next week,Alex Tremblay,FinTech,6120
-DEAL-0011,Forge Networks,Closed Lost,80000,2026-03-09,40,2026-03-28,,Sam Chu,HR Tech,430
-DEAL-0012,Vanta Networks,Demo,25000,2026-06-19,31,2026-05-05,Follow up on proposal,Morgan Ellis,PropTech,159
-DEAL-0013,Basalt Software,Closed Won,40000,2026-03-25,26,2026-04-05,Kickoff scheduled,Casey Park,EdTech,119
-DEAL-0014,Quorum Partners,Closed Lost,25000,2026-02-26,9,2026-04-26,,Sam Chu,HR Tech,611
-DEAL-0015,Kelvin Labs,Closed Won,30000,2026-05-13,24,2026-04-08,Kickoff scheduled,Jordan Avery,Cybersecurity,157
-DEAL-0016,Stratum Commerce,Discovery,55000,2026-06-20,3,2026-05-23,Schedule technical deep-dive with IT team,Casey Park,PropTech,63
-DEAL-0017,Onyx Works,Closed Lost,25000,2026-03-09,18,2026-03-10,,Morgan Ellis,Manufacturing,698
-DEAL-0018,Vesper Works,Discovery,25000,2026-07-23,9,2026-05-19,Send procurement contract,Morgan Ellis,Logistics,174
-DEAL-0019,Ardent Partners,Discovery,105000,2026-07-01,4,2026-05-18,Book executive sponsor alignment call,Sam Chu,Logistics,1898
-DEAL-0020,Meridian Platforms,Proposal,50000,2026-06-30,7,2026-05-23,Complete security questionnaire,Morgan Ellis,Retail Tech,177
-DEAL-0021,Umbra Dynamics,Demo,55000,2026-06-16,1,2026-05-21,Finalize SLA terms and send redline,Casey Park,MarTech,885
-DEAL-0022,Sequin Ops,Demo,35000,2026-08-06,7,2026-05-19,Book executive sponsor alignment call,Jordan Avery,Retail Tech,788
-DEAL-0023,Umbra Works,Discovery,135000,2026-07-30,8,2026-05-18,Schedule technical deep-dive with IT team,Jordan Avery,Logistics,133
-DEAL-0024,Stratum Robotics,Demo,335000,2026-06-02,26,2026-05-09,Reconnect in two weeks,Riley Osei,HealthTech,200
-DEAL-0025,Glyph Ventures,Demo,150000,2026-07-08,9,2026-05-20,Share implementation timeline with champion,Morgan Ellis,Retail Tech,93
-DEAL-0026,Nimbus Technologies,Closed Lost,90000,2026-03-17,21,2026-04-19,,Morgan Ellis,HR Tech,87
-DEAL-0027,Relay Group,Discovery,350000,2026-08-12,11,2026-05-21,Finalize SLA terms and send redline,Casey Park,HR Tech,872
-DEAL-0028,Flint Software,Closed Lost,135000,2026-04-04,25,2026-02-23,,Alex Tremblay,PropTech,840
-DEAL-0029,Vanta Capital,Discovery,15000,2026-05-16,73,2026-04-29,Reconnect next week,Sam Chu,Manufacturing,163
-DEAL-0030,Ember Software,Closed Won,15000,2026-05-17,8,2026-04-02,Kickoff scheduled,Jordan Avery,EdTech,239
-DEAL-0031,Basalt Health,Discovery,20000,2026-05-29,65,2026-03-26,,Morgan Ellis,HealthTech,293
-DEAL-0032,Sable Software,Proposal,25000,2026-06-15,24,2026-05-08,Check in after internal review,Jordan Avery,Manufacturing,4085
-DEAL-0033,Fable Group,Discovery,70000,2026-06-01,34,2026-05-15,Check in after internal review,Jordan Avery,Manufacturing,137
-DEAL-0034,Kelvin Platforms,Demo,45000,2026-07-04,9,2026-05-20,Share implementation timeline with champion,Alex Tremblay,Manufacturing,9587
-DEAL-0035,Mosaic Technologies,Closed Lost,45000,2026-03-03,45,2026-04-02,,Morgan Ellis,EdTech,136
-DEAL-0036,Umbra Ventures,Proposal,40000,2026-07-03,5,2026-05-22,Share implementation timeline with champion,Morgan Ellis,HealthTech,596
-DEAL-0037,Vanta Ops,Proposal,30000,2026-06-04,35,2026-05-11,Follow up on proposal,Jordan Avery,PropTech,559
-DEAL-0038,Quillen Services,Proposal,165000,2026-06-05,88,2026-04-24,,Morgan Ellis,Cybersecurity,134
-DEAL-0039,Cobalt Digital,Negotiation,40000,2026-07-11,5,2026-05-23,Share implementation timeline with champion,Alex Tremblay,Cybersecurity,158
-DEAL-0040,Tidal Software,Negotiation,50000,2026-06-09,18,2026-05-16,Follow up on proposal,Riley Osei,MarTech,85
-DEAL-0041,Stratum Works,Closed Won,110000,2026-04-02,54,2026-03-01,Kickoff scheduled,Casey Park,Cybersecurity,9627
-DEAL-0042,Torque Digital,Discovery,60000,2026-07-05,10,2026-05-18,Finalize SLA terms and send redline,Casey Park,Logistics,96
-DEAL-0043,Quorum Solutions,Closed Lost,165000,2026-03-24,53,2026-03-18,,Jordan Avery,Logistics,110
-DEAL-0044,Wren Group,Closed Lost,40000,2026-04-11,58,2026-04-20,,Casey Park,MarTech,170
-DEAL-0045,Dusk Ventures,Demo,60000,2026-08-06,9,2026-05-20,Deliver ROI analysis to CFO,Alex Tremblay,PropTech,8565
-DEAL-0046,Prism AI,Demo,10000,2026-08-14,1,2026-05-19,Share implementation timeline with champion,Sam Chu,PropTech,114
-DEAL-0047,Harbor Platforms,Closed Won,75000,2026-04-11,53,2026-04-29,Kickoff scheduled,Casey Park,HealthTech,729
-DEAL-0048,Mosaic Health,Proposal,25000,2026-08-10,2,2026-05-23,Share implementation timeline with champion,Riley Osei,Cybersecurity,161
-DEAL-0049,Jasper Services,Closed Won,25000,2026-04-08,10,2026-04-02,Kickoff scheduled,Jordan Avery,Logistics,178
-DEAL-0050,Vertex Dynamics,Proposal,90000,2026-05-02,86,2026-04-23,Follow up,Jordan Avery,Retail Tech,6494
-DEAL-0051,Tidal Partners,Discovery,50000,2026-06-24,10,2026-05-24,Send procurement contract,Morgan Ellis,Manufacturing,343
-DEAL-0052,Revel Partners,Proposal,20000,2026-08-07,10,2026-05-20,Schedule technical deep-dive with IT team,Morgan Ellis,MarTech,9992
-DEAL-0053,Revel Ops,Discovery,55000,2026-06-02,33,2026-05-10,Follow up on proposal,Morgan Ellis,MarTech,62
-DEAL-0054,Quorum Works,Closed Lost,175000,2026-03-25,37,2026-03-02,,Riley Osei,PropTech,848
-DEAL-0055,Mosaic Digital,Demo,30000,2026-06-24,7,2026-05-23,Share implementation timeline with champion,Alex Tremblay,HR Tech,50
-DEAL-0056,Ember Ops,Discovery,30000,2026-08-02,9,2026-05-24,Finalize SLA terms and send redline,Jordan Avery,Cybersecurity,720
-DEAL-0057,Seraph Platforms,Negotiation,50000,2026-07-14,2,2026-05-22,Schedule technical deep-dive with IT team,Jordan Avery,Logistics,5156
-DEAL-0058,Orca Ventures,Negotiation,20000,2026-06-20,31,2026-05-12,Check in after internal review,Casey Park,Retail Tech,140
-DEAL-0059,Jasper Ops,Proposal,15000,2026-08-11,2,2026-05-19,Send procurement contract,Alex Tremblay,Manufacturing,8841
-DEAL-0060,Fable Services,Proposal,15000,2026-07-23,1,2026-05-22,Complete security questionnaire,Morgan Ellis,MarTech,101
-DEAL-0061,Dusk Health,Discovery,35000,2026-07-26,1,2026-05-18,Book executive sponsor alignment call,Casey Park,Manufacturing,98
-DEAL-0062,Crest Media,Proposal,280000,2026-06-10,28,2026-05-11,Check in after internal review,Jordan Avery,Retail Tech,610
-DEAL-0063,Forge Systems,Negotiation,45000,2026-05-21,63,2026-04-27,Reconnect next week,Riley Osei,Manufacturing,182
-DEAL-0064,Dusk Fintech,Negotiation,70000,2026-07-21,2,2026-05-22,Book executive sponsor alignment call,Sam Chu,Cybersecurity,76
-DEAL-0065,Orca Labs,Closed Lost,35000,2026-05-12,7,2026-03-30,,Riley Osei,PropTech,371
-DEAL-0066,Sable Technologies,Demo,25000,2026-05-17,40,2026-04-07,Reconnect next week,Riley Osei,EdTech,259
-DEAL-0067,Ardent Ops,Demo,110000,2026-06-04,28,2026-05-17,Follow up on proposal,Alex Tremblay,HR Tech,3340
-DEAL-0068,Crest Health,Negotiation,15000,2026-07-03,1,2026-05-20,Finalize SLA terms and send redline,Sam Chu,Retail Tech,195
-DEAL-0069,Pylon AI,Negotiation,20000,2026-07-19,7,2026-05-22,Legal review kickoff — send MSA,Morgan Ellis,Retail Tech,279
-DEAL-0070,Kelvin Capital,Closed Lost,30000,2026-05-05,38,2026-03-26,,Jordan Avery,FinTech,712
-DEAL-0071,Quorum Dynamics,Negotiation,135000,2026-08-15,5,2026-05-19,Legal review kickoff — send MSA,Jordan Avery,EdTech,921
-DEAL-0072,Seraph Technologies,Closed Won,95000,2026-05-06,10,2026-04-09,Kickoff scheduled,Jordan Avery,HR Tech,8407
-DEAL-0073,Apex Fintech,Demo,170000,2026-06-05,23,2026-05-04,Check in after internal review,Morgan Ellis,HealthTech,498
-DEAL-0074,Ember Robotics,Demo,60000,2026-07-30,8,2026-05-24,Share implementation timeline with champion,Morgan Ellis,Cybersecurity,101
-DEAL-0075,Fulcrum Software,Proposal,25000,2026-08-03,2,2026-05-22,Finalize SLA terms and send redline,Riley Osei,Cybersecurity,72
-DEAL-0076,Onyx Partners,Proposal,425000,2026-05-22,77,2026-04-28,Check in,Casey Park,Logistics,789
-DEAL-0077,Prism Analytics,Demo,145000,2026-07-07,11,2026-05-20,Deliver ROI analysis to CFO,Alex Tremblay,Cybersecurity,191
-DEAL-0078,Cipher Commerce,Discovery,85000,2026-07-04,5,2026-05-23,Share implementation timeline with champion,Riley Osei,Cybersecurity,1908
-DEAL-0079,Crest Analytics,Discovery,20000,2026-06-24,5,2026-05-18,Book executive sponsor alignment call,Alex Tremblay,MarTech,182
-DEAL-0080,Tidal Dynamics,Proposal,35000,2026-05-31,77,2026-04-22,Reconnect next week,Sam Chu,Cybersecurity,127
-DEAL-0081,Revel Fintech,Closed Won,40000,2026-05-17,43,2026-04-06,Kickoff scheduled,Sam Chu,HR Tech,938
-DEAL-0082,Sable Media,Discovery,330000,2026-06-20,32,2026-05-13,Check in after internal review,Casey Park,FinTech,1465
-DEAL-0083,Crest Digital,Proposal,145000,2026-07-21,8,2026-05-19,Book executive sponsor alignment call,Casey Park,Logistics,232
-DEAL-0084,Cobalt Fintech,Demo,45000,2026-05-22,39,2026-04-22,Check in,Riley Osei,MarTech,7654
-DEAL-0085,Raft Robotics,Discovery,70000,2026-05-16,56,2026-04-12,Check in,Riley Osei,Manufacturing,86
-DEAL-0086,Onyx Fintech,Closed Won,30000,2026-04-09,22,2026-03-23,Kickoff scheduled,Sam Chu,Retail Tech,309
-DEAL-0087,Tidal Health,Closed Lost,120000,2026-04-17,60,2026-02-25,,Sam Chu,HealthTech,148
-DEAL-0088,Dune Health,Discovery,60000,2026-08-16,9,2026-05-21,Book executive sponsor alignment call,Sam Chu,HR Tech,6124
-DEAL-0089,Basalt Platforms,Closed Won,80000,2026-04-09,37,2026-03-22,Kickoff scheduled,Riley Osei,FinTech,150
-DEAL-0090,Nimbus Group,Discovery,40000,2026-05-12,89,2026-04-02,Reconnect next week,Sam Chu,PropTech,62
-DEAL-0091,Cerulean Fintech,Closed Lost,160000,2026-04-15,51,2026-03-29,,Jordan Avery,HealthTech,471
-DEAL-0092,Mosaic Cloud,Closed Won,20000,2026-04-18,23,2026-05-10,Kickoff scheduled,Morgan Ellis,FinTech,784
-DEAL-0093,Relay Services,Closed Lost,35000,2026-05-12,57,2026-02-24,,Casey Park,Manufacturing,487
-DEAL-0094,Glyph Labs,Demo,325000,2026-07-02,9,2026-05-22,Legal review kickoff — send MSA,Jordan Avery,HR Tech,7454
-DEAL-0095,Indigo Group,Closed Won,80000,2026-04-27,26,2026-03-20,Kickoff scheduled,Casey Park,Cybersecurity,242
-DEAL-0096,Fable Works,Demo,55000,2026-07-24,3,2026-05-22,Deliver ROI analysis to CFO,Riley Osei,HR Tech,728
-DEAL-0097,Stratum Partners,Closed Won,20000,2026-04-25,37,2026-03-12,Kickoff scheduled,Riley Osei,PropTech,507
-DEAL-0098,Umbra Analytics,Demo,25000,2026-06-28,6,2026-05-22,Complete security questionnaire,Alex Tremblay,PropTech,54
-DEAL-0099,Zinc Health,Proposal,120000,2026-07-17,10,2026-05-21,Legal review kickoff — send MSA,Casey Park,EdTech,943
-DEAL-0100,Cobalt Partners,Closed Won,20000,2026-05-10,38,2026-02-28,Kickoff scheduled,Alex Tremblay,FinTech,375
+DEAL-0001,Harbor Systems,Demo,20000,2026-06-12,32,2026-04-02,Reconnect next week,Sonny Rollins,HealthTech,688
+DEAL-0002,Jasper Data,Proposal,65000,2026-07-04,10,2026-05-14,Reconnect in two weeks,Miles Davis,Cybersecurity,57
+DEAL-0003,Kelvin Software,Negotiation,70000,2026-06-24,10,2026-05-25,Deliver ROI analysis to CFO,Thelonious Monk,HealthTech,655
+DEAL-0004,Zinc Services,Negotiation,60000,2026-07-23,6,2026-05-23,Finalize SLA terms and send redline,Dizzy Gillespie,PropTech,762
+DEAL-0005,Torque Software,Closed Lost,130000,2026-03-24,54,2026-03-07,,Sonny Rollins,PropTech,919
+DEAL-0006,Seraph Cloud,Negotiation,115000,2026-07-21,65,2026-05-21,,John Coltrane,Manufacturing,7780
+DEAL-0007,Basalt Networks,Proposal,45000,2026-06-24,11,2026-05-23,Schedule technical deep-dive with IT team,Miles Davis,Retail Tech,882
+DEAL-0008,Vertex Networks,Closed Won,455000,2026-05-17,52,2026-04-04,Kickoff scheduled,Miles Davis,HealthTech,963
+DEAL-0009,Wren Analytics,Discovery,15000,2026-07-06,16,2026-05-16,Follow up on proposal,Charlie Parker,Cybersecurity,193
+DEAL-0010,Ember Cloud,Demo,30000,2026-06-20,24,2026-04-25,TBD,Dizzy Gillespie,PropTech,76
+DEAL-0011,Forge Networks,Closed Lost,85000,2026-05-07,19,2026-03-23,,Miles Davis,Retail Tech,7023
+DEAL-0012,Vanta Networks,Demo,80000,2026-06-26,10,2026-05-12,Follow up on proposal,Sonny Rollins,PropTech,771
+DEAL-0013,Basalt Software,Closed Won,100000,2026-05-02,16,2026-05-03,Kickoff scheduled,Charlie Parker,EdTech,517
+DEAL-0014,Quorum Partners,Closed Lost,35000,2026-03-24,10,2026-03-10,,Thelonious Monk,Logistics,57
+DEAL-0015,Kelvin Labs,Closed Won,20000,2026-05-04,54,2026-03-10,Kickoff scheduled,John Coltrane,Logistics,362
+DEAL-0016,Stratum Commerce,Discovery,140000,2026-07-20,11,2026-05-26,Finalize SLA terms and send redline,Miles Davis,FinTech,62
+DEAL-0017,Onyx Works,Closed Lost,30000,2026-04-10,37,2026-05-02,,Thelonious Monk,Logistics,653
+DEAL-0018,Vesper Works,Discovery,70000,2026-07-25,9,2026-05-21,Send procurement contract,John Coltrane,HealthTech,174
+DEAL-0019,Ardent Partners,Discovery,105000,2026-07-03,4,2026-05-20,Book executive sponsor alignment call,Charlie Parker,Logistics,1898
+DEAL-0020,Meridian Platforms,Proposal,50000,2026-07-02,7,2026-05-25,Complete security questionnaire,Dizzy Gillespie,Retail Tech,177
+DEAL-0021,Umbra Dynamics,Demo,55000,2026-06-18,1,2026-05-23,Finalize SLA terms and send redline,Sonny Rollins,MarTech,885
+DEAL-0022,Sequin Ops,Demo,35000,2026-08-08,7,2026-05-21,Book executive sponsor alignment call,Miles Davis,Retail Tech,788
+DEAL-0023,Umbra Works,Discovery,135000,2026-08-01,8,2026-05-20,Schedule technical deep-dive with IT team,Miles Davis,Logistics,133
+DEAL-0024,Stratum Robotics,Demo,335000,2026-06-14,16,2026-05-13,Reconnect in two weeks,John Coltrane,HealthTech,200
+DEAL-0025,Glyph Ventures,Demo,150000,2026-07-10,9,2026-05-22,Share implementation timeline with champion,Dizzy Gillespie,Retail Tech,93
+DEAL-0026,Nimbus Technologies,Closed Lost,90000,2026-03-19,21,2026-04-21,,Dizzy Gillespie,HR Tech,87
+DEAL-0027,Relay Group,Discovery,350000,2026-08-14,11,2026-05-23,Finalize SLA terms and send redline,Sonny Rollins,HR Tech,872
+DEAL-0028,Flint Software,Closed Lost,135000,2026-04-06,25,2026-02-25,,Thelonious Monk,PropTech,840
+DEAL-0029,Vanta Capital,Discovery,15000,2026-06-07,29,2026-04-02,,Charlie Parker,Manufacturing,163
+DEAL-0030,Ember Software,Closed Won,15000,2026-03-31,58,2026-04-15,Kickoff scheduled,John Coltrane,Manufacturing,144
+DEAL-0031,Basalt Health,Discovery,20000,2026-05-20,25,2026-05-18,Reconnect next week,Thelonious Monk,HealthTech,720
+DEAL-0032,Sable Software,Proposal,110000,2026-06-12,18,2026-05-19,Reconnect in two weeks,Thelonious Monk,MarTech,171
+DEAL-0033,Fable Group,Discovery,30000,2026-07-07,13,2026-05-10,Reconnect in two weeks,Miles Davis,Retail Tech,2382
+DEAL-0034,Kelvin Platforms,Demo,50000,2026-08-04,6,2026-05-24,Complete security questionnaire,Sonny Rollins,Cybersecurity,573
+DEAL-0035,Mosaic Technologies,Closed Lost,70000,2026-04-02,48,2026-03-28,,Dizzy Gillespie,PropTech,135
+DEAL-0036,Umbra Ventures,Proposal,60000,2026-07-04,2,2026-05-22,Share implementation timeline with champion,Dizzy Gillespie,PropTech,6462
+DEAL-0037,Vanta Ops,Proposal,35000,2026-06-17,22,2026-05-16,Follow up on proposal,Dizzy Gillespie,Logistics,71
+DEAL-0038,Quillen Services,Proposal,110000,2026-06-15,23,2026-04-21,Check in,Thelonious Monk,Logistics,219
+DEAL-0039,Cobalt Digital,Negotiation,230000,2026-06-20,2,2026-05-22,Share implementation timeline with champion,Charlie Parker,MarTech,3539
+DEAL-0040,Tidal Software,Negotiation,110000,2026-06-19,12,2026-05-19,Reconnect in two weeks,Sonny Rollins,HR Tech,358
+DEAL-0041,Stratum Works,Closed Won,165000,2026-04-10,53,2026-03-25,Kickoff scheduled,Miles Davis,Logistics,110
+DEAL-0042,Torque Digital,Discovery,40000,2026-08-11,4,2026-05-24,Finalize SLA terms and send redline,Sonny Rollins,MarTech,170
+DEAL-0043,Quorum Solutions,Closed Lost,250000,2026-03-14,56,2026-02-28,,Dizzy Gillespie,Logistics,629
+DEAL-0044,Wren Group,Closed Lost,35000,2026-05-02,40,2026-05-03,,Dizzy Gillespie,FinTech,581
+DEAL-0045,Dusk Ventures,Demo,35000,2026-08-10,3,2026-05-20,Schedule technical deep-dive with IT team,Miles Davis,EdTech,91
+DEAL-0046,Prism AI,Demo,340000,2026-08-05,7,2026-05-26,Share implementation timeline with champion,Charlie Parker,Manufacturing,1437
+DEAL-0047,Harbor Platforms,Closed Won,55000,2026-04-17,11,2026-02-27,Kickoff scheduled,Charlie Parker,Logistics,7143
+DEAL-0048,Mosaic Health,Proposal,105000,2026-08-15,3,2026-05-20,Finalize SLA terms and send redline,Charlie Parker,HR Tech,170
+DEAL-0049,Jasper Services,Closed Won,45000,2026-04-29,40,2026-03-05,Kickoff scheduled,Sonny Rollins,FinTech,1312
+DEAL-0050,Vertex Dynamics,Proposal,270000,2026-07-21,39,2026-05-23,,John Coltrane,HealthTech,444
+DEAL-0051,Tidal Partners,Discovery,45000,2026-07-16,9,2026-05-22,Deliver ROI analysis to CFO,Sonny Rollins,Manufacturing,177
+DEAL-0052,Revel Partners,Proposal,45000,2026-08-08,4,2026-05-22,Deliver ROI analysis to CFO,Dizzy Gillespie,Logistics,140
+DEAL-0053,Revel Ops,Discovery,135000,2026-07-14,18,2026-05-13,Follow up on proposal,Thelonious Monk,HealthTech,570
+DEAL-0054,Quorum Works,Closed Lost,75000,2026-02-27,28,2026-04-14,,John Coltrane,Manufacturing,149
+DEAL-0055,Mosaic Digital,Demo,60000,2026-06-21,6,2026-05-25,Share implementation timeline with champion,Dizzy Gillespie,HealthTech,76
+DEAL-0056,Ember Ops,Discovery,10000,2026-08-16,11,2026-05-23,Deliver ROI analysis to CFO,Sonny Rollins,Retail Tech,3869
+DEAL-0057,Seraph Platforms,Negotiation,90000,2026-07-26,4,2026-05-26,Book executive sponsor alignment call,Charlie Parker,HealthTech,669
+DEAL-0058,Orca Ventures,Negotiation,55000,2026-06-11,17,2026-05-17,Check in after internal review,Sonny Rollins,Logistics,9898
+DEAL-0059,Jasper Ops,Proposal,85000,2026-08-02,2,2026-05-20,Complete security questionnaire,Dizzy Gillespie,Retail Tech,1784
+DEAL-0060,Fable Services,Proposal,25000,2026-08-18,6,2026-05-25,Finalize SLA terms and send redline,John Coltrane,Manufacturing,7335
+DEAL-0061,Dusk Health,Discovery,45000,2026-07-09,10,2026-05-20,Book executive sponsor alignment call,Dizzy Gillespie,Cybersecurity,71
+DEAL-0062,Crest Media,Proposal,35000,2026-07-06,14,2026-05-14,Check in after internal review,Dizzy Gillespie,HealthTech,125
+DEAL-0063,Forge Systems,Negotiation,35000,2026-06-25,31,2026-04-17,Follow up,Thelonious Monk,Manufacturing,60
+DEAL-0064,Dusk Fintech,Negotiation,80000,2026-08-11,10,2026-05-21,Send procurement contract,Miles Davis,Logistics,90
+DEAL-0065,Orca Labs,Closed Lost,40000,2026-05-08,28,2026-03-28,,Charlie Parker,HealthTech,143
+DEAL-0066,Sable Technologies,Demo,110000,2026-05-22,23,2026-05-16,,Miles Davis,PropTech,165
+DEAL-0067,Ardent Ops,Demo,35000,2026-06-20,11,2026-05-21,Reconnect in two weeks,John Coltrane,Retail Tech,456
+DEAL-0068,Crest Health,Negotiation,45000,2026-07-22,8,2026-05-25,Finalize SLA terms and send redline,Sonny Rollins,Logistics,2930
+DEAL-0069,Pylon AI,Negotiation,100000,2026-08-11,8,2026-05-25,Schedule technical deep-dive with IT team,Charlie Parker,HealthTech,68
+DEAL-0070,Kelvin Capital,Closed Lost,140000,2026-03-19,24,2026-04-26,,Thelonious Monk,Retail Tech,927
+DEAL-0071,Quorum Dynamics,Negotiation,75000,2026-08-18,3,2026-05-25,Send procurement contract,Dizzy Gillespie,Cybersecurity,101
+DEAL-0072,Seraph Technologies,Closed Won,70000,2026-03-31,44,2026-05-10,Kickoff scheduled,Dizzy Gillespie,Cybersecurity,679
+DEAL-0073,Apex Fintech,Demo,15000,2026-07-05,18,2026-05-15,Follow up on proposal,Dizzy Gillespie,Logistics,8843
+DEAL-0074,Ember Robotics,Demo,15000,2026-07-09,3,2026-05-20,Deliver ROI analysis to CFO,Charlie Parker,Retail Tech,661
+DEAL-0075,Fulcrum Software,Proposal,60000,2026-07-05,2,2026-05-22,Book executive sponsor alignment call,John Coltrane,Cybersecurity,1908
+DEAL-0076,Onyx Partners,Proposal,15000,2026-05-14,27,2026-05-17,TBD,Charlie Parker,HR Tech,107
+DEAL-0077,Prism Analytics,Demo,285000,2026-06-27,10,2026-05-22,Deliver ROI analysis to CFO,Thelonious Monk,Cybersecurity,127
+DEAL-0078,Cipher Commerce,Discovery,95000,2026-06-21,1,2026-05-26,Book executive sponsor alignment call,Sonny Rollins,PropTech,136
+DEAL-0079,Crest Analytics,Discovery,20000,2026-06-19,10,2026-05-21,Finalize SLA terms and send redline,Thelonious Monk,MarTech,627
+DEAL-0080,Tidal Dynamics,Proposal,60000,2026-06-07,27,2026-04-05,,Thelonious Monk,Cybersecurity,127
+DEAL-0081,Revel Fintech,Closed Won,20000,2026-05-21,14,2026-04-11,Kickoff scheduled,Miles Davis,HR Tech,696
+DEAL-0082,Sable Media,Discovery,60000,2026-07-02,16,2026-05-19,Follow up on proposal,Thelonious Monk,Retail Tech,554
+DEAL-0083,Crest Digital,Proposal,30000,2026-08-04,1,2026-05-24,Complete security questionnaire,Dizzy Gillespie,MarTech,474
+DEAL-0084,Cobalt Fintech,Demo,55000,2026-07-27,46,2026-05-21,Check in,Charlie Parker,HR Tech,6124
+DEAL-0085,Raft Robotics,Discovery,135000,2026-05-17,17,2026-05-09,Follow up,John Coltrane,EdTech,293
+DEAL-0086,Onyx Fintech,Closed Won,35000,2026-04-14,48,2026-03-22,Kickoff scheduled,Miles Davis,EdTech,870
+DEAL-0087,Tidal Health,Closed Lost,80000,2026-04-12,28,2026-03-26,,Sonny Rollins,FinTech,8061
+DEAL-0088,Dune Health,Discovery,85000,2026-07-22,4,2026-05-24,Schedule technical deep-dive with IT team,Miles Davis,Logistics,193
+DEAL-0089,Basalt Platforms,Closed Won,30000,2026-04-03,48,2026-03-04,Kickoff scheduled,John Coltrane,Cybersecurity,764
+DEAL-0090,Nimbus Group,Discovery,20000,2026-07-20,74,2026-05-20,Reconnect next week,Charlie Parker,HealthTech,136
+DEAL-0091,Cerulean Fintech,Closed Lost,35000,2026-05-02,56,2026-03-17,,Miles Davis,FinTech,135
+DEAL-0092,Mosaic Cloud,Closed Won,185000,2026-04-21,25,2026-05-01,Kickoff scheduled,John Coltrane,HR Tech,728
+DEAL-0093,Relay Services,Closed Lost,245000,2026-05-04,58,2026-03-12,,Sonny Rollins,EdTech,720
+DEAL-0094,Glyph Labs,Demo,20000,2026-07-25,7,2026-05-22,Send procurement contract,John Coltrane,PropTech,54
+DEAL-0095,Indigo Group,Closed Won,130000,2026-05-12,41,2026-04-22,Kickoff scheduled,Sonny Rollins,Manufacturing,198
+DEAL-0096,Fable Works,Demo,20000,2026-07-17,7,2026-05-25,Send procurement contract,Miles Davis,PropTech,737
+DEAL-0097,Stratum Partners,Closed Won,20000,2026-04-05,25,2026-03-29,Kickoff scheduled,Sonny Rollins,HealthTech,162
+DEAL-0098,Umbra Analytics,Demo,25000,2026-07-03,1,2026-05-21,Legal review kickoff — send MSA,John Coltrane,MarTech,994
+DEAL-0099,Zinc Health,Proposal,25000,2026-07-26,9,2026-05-23,Deliver ROI analysis to CFO,Sonny Rollins,Retail Tech,8838
+DEAL-0100,Cobalt Partners,Closed Won,20000,2026-05-17,48,2026-02-28,Kickoff scheduled,John Coltrane,Cybersecurity,140
