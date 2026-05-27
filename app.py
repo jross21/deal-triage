@@ -1,5 +1,6 @@
 import html
 import os
+import re
 from datetime import date
 from pathlib import Path
 
@@ -573,7 +574,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             _theme_key = "dark" if dark_mode else "light"
             _tier_key = _risk_tier(row["risk_score"]).lower()
             _border_css = _TIER_BORDER[_theme_key][_tier_key]
-            _safe_id = html.escape(str(row["deal_id"]))
+            _safe_id = re.sub(r'[^A-Za-z0-9_-]', '', str(row["deal_id"]))
             st.markdown(
                 f'<style>[data-testid="stExpander"]:has([data-deal-id="{_safe_id}"]) '
                 f'{{ {_border_css} }}</style>'
