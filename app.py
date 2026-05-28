@@ -258,6 +258,7 @@ model_choice = st.sidebar.selectbox(
 ACTIVE_MODEL = (
     "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
 )
+api_key = os.getenv("ANTHROPIC_API_KEY")
 st.sidebar.markdown(
     "<div style='padding-top:1rem;color:#334155;font-size:0.65rem;"
     "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v2.0</div>",
@@ -357,8 +358,6 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             unsafe_allow_html=True,
         )
         st.stop()
-
-    api_key = os.getenv("ANTHROPIC_API_KEY")
 
     # -----------------------------------------------------------------------
     # Summary metrics
