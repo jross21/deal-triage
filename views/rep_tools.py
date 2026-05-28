@@ -1,4 +1,3 @@
-import glob
 import html
 import os
 from pathlib import Path
