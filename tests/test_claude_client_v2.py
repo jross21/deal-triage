@@ -163,3 +163,48 @@ def test_generate_pipeline_review_returns_none_without_api_key(monkeypatch):
 
     result = cc.generate_pipeline_review([], model="claude-haiku-4-5-20251001")
     assert result is None
+
+
+STRATEGIC_INSIGHT_TEXT = (
+    "Stage stagnation is the dominant risk signal this month — 14 deals are stuck beyond "
+    "2× the historical median for their stage, concentrated in Proposal (9 of 14). "
+    "Budget objections are surfacing early in cycles, which historically correlates with longer deal cycles. "
+    "Recommend a messaging review on how ROI is quantified in early calls."
+)
+
+
+def test_generate_strategic_insight_returns_string(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    prompt_dir = tmp_path / "prompts"
+    prompt_dir.mkdir()
+    (prompt_dir / "strategic_insight.md").write_text("Generate a strategic insight.")
+    monkeypatch.chdir(tmp_path)
+
+    from unittest.mock import MagicMock
+    mock_client = MagicMock()
+    mock_msg = MagicMock()
+    mock_msg.content = [MagicMock(text=STRATEGIC_INSIGHT_TEXT)]
+    mock_client.messages.create.return_value = mock_msg
+
+    from importlib import reload
+    import claude_client as cc
+    reload(cc)
+
+    with patch("claude_client.Anthropic") as mock_cls:
+        mock_cls.return_value = mock_client
+        signal_counts = {"Stage stagnation ≥2× median": 14, "No activity in 14+ days": 11}
+        rep_profiles = [{"rep_name": "Marcus Webb", "avg_risk": 78.0, "deal_count": 3}]
+        result = cc.generate_strategic_insight(signal_counts, rep_profiles, model="claude-haiku-4-5-20251001")
+
+    assert isinstance(result, str)
+    assert len(result) > 50
+
+
+def test_generate_strategic_insight_returns_none_without_api_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    from importlib import reload
+    import claude_client as cc
+    reload(cc)
+
+    result = cc.generate_strategic_insight({}, [], model="claude-haiku-4-5-20251001")
+    assert result is None

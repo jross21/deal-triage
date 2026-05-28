@@ -241,3 +241,43 @@ def generate_pipeline_review(rep_summaries: list, model: str = DEFAULT_MODEL) ->
         return json.loads(text[start:end])
     except Exception:
         return None
+
+
+def generate_strategic_insight(
+    signal_counts: dict, rep_profiles: list, model: str = DEFAULT_MODEL
+) -> str | None:
+    """Generate a plain-text strategic insight paragraph for the Leader Dashboard.
+
+    signal_counts: dict of {signal_name: deal_count}.
+    rep_profiles: list of dicts with rep_name, avg_risk, deal_count.
+    Returns a plain-text paragraph string, or None on failure.
+    """
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return None
+
+    prompt_template = _load_prompt("strategic_insight")
+    if not prompt_template:
+        return None
+
+    signal_lines = "\n".join(f"- {k}: {v} deals" for k, v in signal_counts.items())
+    rep_lines = "\n".join(
+        f"- {r['rep_name']}: avg risk {r['avg_risk']:.0f}/100, {r['deal_count']} open deals"
+        for r in rep_profiles
+    )
+
+    prompt = (
+        prompt_template
+        .replace("{signal_counts}", signal_lines or "No signal data available.")
+        .replace("{rep_profiles}", rep_lines or "No rep data available.")
+    )
+
+    try:
+        client = Anthropic()
+        response = client.messages.create(
+            model=model,
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text.strip()
+    except Exception:
+        return None
