@@ -182,6 +182,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ---------------------------------------------------------------------------
+# Sidebar navigation (top of sidebar, before all other controls)
+# ---------------------------------------------------------------------------
+page = st.sidebar.radio(
+    "Navigate",
+    ["Pipeline", "Rep Tools", "Manager View", "Leader Dashboard"],
+    label_visibility="collapsed",
+)
+
 # Header
 st.markdown("""
 <div style="padding:0 0 1.5rem 0">
@@ -191,7 +200,93 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# Tabs
+# Data loading (top-level — needed by all pages)
+# ---------------------------------------------------------------------------
+uploaded = st.file_uploader(
+    "Upload opportunities CSV",
+    type="csv",
+    label_visibility="collapsed",
+    help="Upload a HubSpot-style CSV export. See 'How to use Deal Triage' above for required columns.",
+)
+
+if uploaded is not None:
+    df_raw = pd.read_csv(uploaded)
+elif SAMPLE_CSV.exists():
+    df_raw = pd.read_csv(SAMPLE_CSV)
+    if page == "Pipeline":
+        st.markdown(
+            '<div class="info-banner">ℹ️&nbsp; Showing sample data — upload your own CSV above to analyze real deals.</div>',
+            unsafe_allow_html=True,
+        )
+else:
+    st.error(
+        f"Sample data not found at `{SAMPLE_CSV}`. "
+        "Run `python3 scripts/generate_sample_data.py` from the project root first."
+    )
+    st.stop()
+
+REQUIRED_COLS = {
+    "deal_id", "account_name", "stage", "amount", "close_date",
+    "days_in_stage", "last_activity_date", "owner", "industry", "employee_count",
+}
+missing_cols = REQUIRED_COLS - set(df_raw.columns)
+if missing_cols:
+    st.error(
+        f"CSV is missing required columns: **{', '.join(sorted(missing_cols))}**  \n"
+        "See the README for the full column spec."
+    )
+    st.stop()
+
+scored = score_deals(df_raw)
+
+# ---------------------------------------------------------------------------
+# Sidebar — shared controls
+# ---------------------------------------------------------------------------
+all_owners = sorted(scored["owner"].unique().tolist())
+selected_owner = st.sidebar.selectbox(
+    "Filter by owner",
+    ["All"] + all_owners,
+    help="Filter the at-risk deals by account executive.",
+)
+filtered = scored[scored["owner"] == selected_owner] if selected_owner != "All" else scored
+
+model_choice = st.sidebar.selectbox(
+    "Claude model",
+    ["Haiku (fast)", "Sonnet (deeper)"],
+    help="Haiku is faster and cheaper. Sonnet produces richer analysis.",
+)
+ACTIVE_MODEL = (
+    "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
+)
+st.sidebar.markdown(
+    "<div style='padding-top:1rem;color:#334155;font-size:0.65rem;"
+    "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v2.0</div>",
+    unsafe_allow_html=True,
+)
+
+if "explanations" not in st.session_state:
+    st.session_state.explanations = {}
+
+# ---------------------------------------------------------------------------
+# Page routing
+# ---------------------------------------------------------------------------
+if page == "Rep Tools":
+    from views.rep_tools import render as render_rep
+    render_rep(scored, st.session_state.explanations, ACTIVE_MODEL)
+    st.stop()
+
+if page == "Manager View":
+    from views.manager_view import render as render_manager
+    render_manager(scored, st.session_state.explanations, ACTIVE_MODEL)
+    st.stop()
+
+if page == "Leader Dashboard":
+    from views.leader_dashboard import render as render_leader
+    render_leader(scored, ACTIVE_MODEL)
+    st.stop()
+
+# ---------------------------------------------------------------------------
+# Pipeline page (default)
 # ---------------------------------------------------------------------------
 tab_main, tab_method = st.tabs(["📊 Deal Triage", "📖 Methodology"])
 
@@ -249,61 +344,6 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
 
     st.session_state.onboarding_seen = True
 
-    # -----------------------------------------------------------------------
-    # Data loading
-    # -----------------------------------------------------------------------
-    uploaded = st.file_uploader(
-        "Upload opportunities CSV",
-        type="csv",
-        label_visibility="collapsed",
-        help="Upload a HubSpot-style CSV export. See 'How to use Deal Triage' above for required columns.",
-    )
-
-    if uploaded is not None:
-        df_raw = pd.read_csv(uploaded)
-    elif SAMPLE_CSV.exists():
-        df_raw = pd.read_csv(SAMPLE_CSV)
-        st.markdown(
-            '<div class="info-banner">ℹ️&nbsp; Showing sample data — upload your own CSV above to analyze real deals.</div>',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.error(
-            f"Sample data not found at `{SAMPLE_CSV}`. "
-            "Run `python3 scripts/generate_sample_data.py` from the project root first."
-        )
-        st.stop()
-
-    # -----------------------------------------------------------------------
-    # Validate CSV columns
-    # -----------------------------------------------------------------------
-    REQUIRED_COLS = {
-        "deal_id", "account_name", "stage", "amount", "close_date",
-        "days_in_stage", "last_activity_date", "owner", "industry", "employee_count",
-    }
-    missing_cols = REQUIRED_COLS - set(df_raw.columns)
-    if missing_cols:
-        st.error(
-            f"CSV is missing required columns: **{', '.join(sorted(missing_cols))}**  \n"
-            "See the README for the full column spec."
-        )
-        st.stop()
-
-    # -----------------------------------------------------------------------
-    # Score and rank
-    # -----------------------------------------------------------------------
-    scored = score_deals(df_raw)
-
-    # -----------------------------------------------------------------------
-    # Sidebar — controls
-    # -----------------------------------------------------------------------
-    all_owners = sorted(scored["owner"].unique().tolist())
-    selected_owner = st.sidebar.selectbox(
-        "Filter by owner",
-        ["All"] + all_owners,
-        help="Filter the top 10 at-risk deals by account executive.",
-    )
-    filtered = scored[scored["owner"] == selected_owner] if selected_owner != "All" else scored
     top10 = filtered.head(TOP_N).copy()
 
     _transcripts = {str(did): find_transcript(str(did)) for did in top10["deal_id"]}
@@ -318,19 +358,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         )
         st.stop()
 
-    model_choice = st.sidebar.selectbox(
-        "Claude model",
-        ["Haiku (fast)", "Sonnet (deeper)"],
-        help="Haiku is faster and cheaper. Sonnet produces richer buying process analysis for high-confidence deals.",
-    )
-    ACTIVE_MODEL = (
-        "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
-    )
-    st.sidebar.markdown(
-        "<div style='padding-top:1rem;color:#334155;font-size:0.65rem;"
-        "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v1.5</div>",
-        unsafe_allow_html=True,
-    )
+    api_key = os.getenv("ANTHROPIC_API_KEY")
 
     # -----------------------------------------------------------------------
     # Summary metrics
@@ -429,11 +457,6 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     # -----------------------------------------------------------------------
     # Claude analysis
     # -----------------------------------------------------------------------
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-
-    if "explanations" not in st.session_state:
-        st.session_state.explanations = {}
-
     st.divider()
 
     if api_key:
