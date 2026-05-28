@@ -14,6 +14,7 @@ Return ONLY a valid JSON object — no extra text, no markdown:
 Rules:
 - pulse: Name specific reps and specific risk patterns. Use the numbers provided. No generic statements.
 - reps array: Include ONLY reps with at least one deal with risk_score >= 60. Reps with all-healthy pipelines are omitted.
+- rep_name: Use the rep's name exactly as it appears in the input data — do not paraphrase or shorten.
 - questions: 2-3 per rep. Must reference the specific deals or signals listed for that rep. Not generic sales manager questions.
 
 TEAM PIPELINE DATA:

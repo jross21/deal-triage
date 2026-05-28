@@ -152,9 +152,6 @@ def generate_pre_call_brief(
     if not prompt_template:
         return None
 
-    from datetime import date
-    TODAY = date.today()
-
     deal_data = "\n".join([
         f"- Account: {row['account_name']}",
         f"- Stage: {row['stage']}",
