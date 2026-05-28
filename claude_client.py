@@ -135,3 +135,66 @@ def generate_followup_email(row: dict, analysis: dict, model: str = DEFAULT_MODE
         return response.content[0].text.strip()
     except Exception:
         return None
+
+
+def generate_pre_call_brief(
+    row, transcript: str = "", model: str = DEFAULT_MODEL, existing_analysis: dict = None
+) -> dict | None:
+    """Generate a pre-call brief for a deal.
+
+    Returns dict with keys: context, objections, agenda, questions.
+    Returns None if API key missing or call fails.
+    """
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return None
+
+    prompt_template = _load_prompt("pre_call_brief")
+    if not prompt_template:
+        return None
+
+    from datetime import date
+    TODAY = date.today()
+
+    deal_data = "\n".join([
+        f"- Account: {row['account_name']}",
+        f"- Stage: {row['stage']}",
+        f"- Amount: ${int(row['amount']):,}",
+        f"- Close Date: {row['close_date']}",
+        f"- Days in Stage: {row['days_in_stage']}",
+        f"- Last Activity: {row['last_activity_date']}",
+        f"- Next Step: {row.get('next_step') or 'None'}",
+        f"- Owner: {row['owner']}",
+        f"- Industry: {row['industry']}",
+        f"- Risk Score: {row.get('risk_score', 0)}/100",
+        f"- Score breakdown: Stage {row.get('_stage_pts', 0)}/40 · "
+        f"Activity {row.get('_act_pts', 0)}/30 · Close {row.get('_close_pts', 0)}/30",
+    ])
+
+    if existing_analysis:
+        deal_data += f"\n- Prior analysis summary: {existing_analysis.get('executive_summary') or existing_analysis.get('brief') or ''}"
+
+    transcript_section = (
+        f"\nCALL TRANSCRIPT EXCERPT:\n{transcript[:2500]}" if transcript else ""
+    )
+
+    prompt = prompt_template.replace("{deal_data}", deal_data)
+    if "{transcript_section}" in prompt:
+        prompt = prompt.replace("{transcript_section}", transcript_section)
+    elif transcript_section:
+        prompt += transcript_section
+
+    try:
+        client = Anthropic()
+        response = client.messages.create(
+            model=model,
+            max_tokens=800,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = response.content[0].text.strip()
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start == -1 or end == 0:
+            return None
+        return json.loads(text[start:end])
+    except Exception:
+        return None
