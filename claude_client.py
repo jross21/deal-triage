@@ -198,3 +198,46 @@ def generate_pre_call_brief(
         return json.loads(text[start:end])
     except Exception:
         return None
+
+
+def generate_pipeline_review(rep_summaries: list, model: str = DEFAULT_MODEL) -> dict | None:
+    """Generate a pipeline review meeting agenda.
+
+    rep_summaries: list of dicts, each with keys: rep_name, deals (list of deal dicts).
+    Returns dict with keys: pulse (str), reps (list of {rep_name, questions}).
+    Returns None if API key missing or call fails.
+    """
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return None
+
+    prompt_template = _load_prompt("pipeline_review")
+    if not prompt_template:
+        return None
+
+    lines = []
+    for rep in rep_summaries:
+        lines.append(f"\n{rep['rep_name']}:")
+        for deal in rep.get("deals", []):
+            lines.append(
+                f"  - {deal['account_name']} | {deal['stage']} | "
+                f"Score {deal['risk_score']}/100 | {deal.get('signal', '')}"
+            )
+    rep_block = "\n".join(lines) if lines else "No high-risk deals found."
+
+    prompt = prompt_template.replace("{rep_summaries}", rep_block)
+
+    try:
+        client = Anthropic()
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = response.content[0].text.strip()
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start == -1 or end == 0:
+            return None
+        return json.loads(text[start:end])
+    except Exception:
+        return None
