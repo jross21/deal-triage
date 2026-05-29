@@ -37,12 +37,12 @@ def _risk_tier(score):
 
 
 def _format_pull_timestamp(dt: datetime) -> str:
-    delta = datetime.now() - dt
-    if delta.seconds < 60:
+    total = int((datetime.now() - dt).total_seconds())
+    if total < 60:
         return "Just pulled"
-    if delta.seconds < 3600:
-        return f"Pulled {delta.seconds // 60}m ago"
-    return f"Pulled {delta.seconds // 3600}h ago"
+    if total < 3600:
+        return f"Pulled {total // 60}m ago"
+    return f"Pulled {total // 3600}h ago"
 
 
 # ---------------------------------------------------------------------------

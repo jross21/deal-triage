@@ -59,6 +59,7 @@ def test_fetch_pipeline_returns_correct_schema(monkeypatch):
             "properties": {
                 "dealname": "Test Deal",
                 "dealstage": "appointmentscheduled",
+                "pipeline": "pipeline1",
                 "amount": "50000",
                 "closedate": "1748476800000",
                 "hs_time_in_current_stage": "864000000",

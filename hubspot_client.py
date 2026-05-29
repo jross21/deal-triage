@@ -69,6 +69,9 @@ def fetch_pipeline(pipeline_id: str | None = None) -> pd.DataFrame:
     rows = []
     for deal in deals:
         props = deal.get("properties", {})
+        # Filter to selected pipeline when one was specified
+        if effective_pipeline_id and props.get("pipeline") != effective_pipeline_id:
+            continue
         stage = _resolve_stage(props.get("dealstage", ""), stage_map)
         if stage is None:
             continue  # Closed or unmapped stage — exclude
@@ -173,7 +176,7 @@ def _get_owner_map(headers: dict) -> dict:
 
 def _fetch_all_deals(headers: dict) -> list[dict]:
     properties = [
-        "dealname", "dealstage", "amount", "closedate",
+        "dealname", "dealstage", "pipeline", "amount", "closedate",
         "hs_time_in_current_stage", "notes_last_updated",
         "hubspot_owner_id", "hs_next_step", "industry", "numberofemployees",
     ]
