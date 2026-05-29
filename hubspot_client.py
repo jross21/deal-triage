@@ -1,7 +1,6 @@
 import json
 import os
 from datetime import date, datetime, timezone
-from pathlib import Path
 
 import pandas as pd
 import requests
