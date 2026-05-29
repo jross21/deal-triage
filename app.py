@@ -1,7 +1,7 @@
 import html
 import os
 import re
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import altair as alt
@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 
 import claude_client
+import hubspot_client
 import feedback as feedback_store
 
 # ---------------------------------------------------------------------------
@@ -33,6 +34,15 @@ MIN_BENCHMARK_SAMPLE = 5
 
 def _risk_tier(score):
     return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
+
+
+def _format_pull_timestamp(dt: datetime) -> str:
+    delta = datetime.now() - dt
+    if delta.seconds < 60:
+        return "Just pulled"
+    if delta.seconds < 3600:
+        return f"Pulled {delta.seconds // 60}m ago"
+    return f"Pulled {delta.seconds // 3600}h ago"
 
 
 # ---------------------------------------------------------------------------
@@ -202,28 +212,95 @@ st.markdown("""
 # ---------------------------------------------------------------------------
 # Data loading (top-level — needed by all pages)
 # ---------------------------------------------------------------------------
-uploaded = st.file_uploader(
-    "Upload opportunities CSV",
-    type="csv",
+# ---------------------------------------------------------------------------
+# Data Source selector
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(
+    "<div style='font-size:0.7rem;font-weight:600;text-transform:uppercase;"
+    "letter-spacing:0.06em;color:#64748b;margin-bottom:0.4rem'>Data Source</div>",
+    unsafe_allow_html=True,
+)
+source = st.sidebar.radio(
+    "source",
+    ["🔗 HubSpot", "📁 Upload CSV", "🧪 Sample Data"],
     label_visibility="collapsed",
-    help="Upload a HubSpot-style CSV export. See 'How to use Deal Triage' above for required columns.",
+    key="data_source",
 )
 
-if uploaded is not None:
-    df_raw = pd.read_csv(uploaded)
-elif SAMPLE_CSV.exists():
+if source == "🔗 HubSpot":
+    if not hubspot_client.is_connected():
+        st.sidebar.error("Set HUBSPOT_ACCESS_TOKEN in .env")
+        st.warning(
+            "**HubSpot not connected.** Add `HUBSPOT_ACCESS_TOKEN` to your `.env` file "
+            "and restart the app. See `.env.example` for setup instructions.",
+            icon="🔗",
+        )
+        st.stop()
+
+    pipelines = hubspot_client.get_pipelines()
+    if not pipelines:
+        st.sidebar.error("No pipelines found")
+        st.stop()
+
+    pipeline_options = {p["label"]: p["id"] for p in pipelines}
+    selected_label = st.sidebar.selectbox("Pipeline", list(pipeline_options.keys()))
+    selected_id = pipeline_options[selected_label]
+
+    hs_cache_key = f"hs_data_{selected_id}"
+    hs_pulled_key = f"hs_pulled_{selected_id}"
+
+    col_refresh, col_ts = st.sidebar.columns([1, 2])
+    with col_refresh:
+        do_refresh = st.button("↻", help="Refresh from HubSpot", key="hs_refresh")
+    with col_ts:
+        pulled_at = st.session_state.get(hs_pulled_key)
+        if pulled_at:
+            st.caption(_format_pull_timestamp(pulled_at))
+
+    if do_refresh or hs_cache_key not in st.session_state:
+        try:
+            with st.spinner("Fetching from HubSpot…"):
+                st.session_state[hs_cache_key] = hubspot_client.fetch_pipeline(selected_id)
+                st.session_state[hs_pulled_key] = datetime.now()
+        except hubspot_client.HubSpotError as e:
+            st.error(f"HubSpot error: {e}")
+            st.stop()
+
+    df_raw = st.session_state[hs_cache_key]
+
+    if page == "Pipeline":
+        deal_count = len(df_raw)
+        st.markdown(
+            f'<div class="info-banner">🔗&nbsp; Live data from HubSpot · {deal_count} open deals</div>',
+            unsafe_allow_html=True,
+        )
+
+elif source == "📁 Upload CSV":
+    uploaded = st.file_uploader(
+        "Upload opportunities CSV",
+        type="csv",
+        label_visibility="collapsed",
+        help="Upload a HubSpot-style CSV export.",
+    )
+    if uploaded is not None:
+        df_raw = pd.read_csv(uploaded)
+    else:
+        st.info("Upload a CSV file to get started, or switch to Sample Data.")
+        st.stop()
+
+else:  # Sample Data
+    if not SAMPLE_CSV.exists():
+        st.error(
+            f"Sample data not found at `{SAMPLE_CSV}`. "
+            "Run `python3 scripts/generate_sample_data.py` first."
+        )
+        st.stop()
     df_raw = pd.read_csv(SAMPLE_CSV)
     if page == "Pipeline":
         st.markdown(
-            '<div class="info-banner">ℹ️&nbsp; Showing sample data — upload your own CSV above to analyze real deals.</div>',
+            '<div class="info-banner">ℹ️&nbsp; Showing sample data — switch to HubSpot or upload your own CSV above.</div>',
             unsafe_allow_html=True,
         )
-else:
-    st.error(
-        f"Sample data not found at `{SAMPLE_CSV}`. "
-        "Run `python3 scripts/generate_sample_data.py` from the project root first."
-    )
-    st.stop()
 
 REQUIRED_COLS = {
     "deal_id", "account_name", "stage", "amount", "close_date",
