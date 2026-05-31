@@ -1,9 +1,12 @@
 import json
+import logging
 import os
 from datetime import date, datetime, timezone
 
 import pandas as pd
 import requests
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.hubapi.com"
 
@@ -45,6 +48,7 @@ def get_pipelines() -> list[dict]:
         resp.raise_for_status()
         return [{"id": p["id"], "label": p["label"]} for p in resp.json().get("results", [])]
     except Exception:
+        logger.exception("Failed to fetch HubSpot pipelines")
         return []
 
 
@@ -171,6 +175,7 @@ def _get_owner_map(headers: dict) -> dict:
             for o in owners
         }
     except Exception:
+        logger.exception("Failed to fetch HubSpot owner map; owners will show as raw IDs")
         return {}
 
 

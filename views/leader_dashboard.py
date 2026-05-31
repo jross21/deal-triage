@@ -5,6 +5,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+import ui
 import claude_client
 from analytics import (
     compute_at_risk_pipeline,
@@ -13,13 +14,17 @@ from analytics import (
     compute_proposal_health_rate,
     compute_signal_counts,
 )
-
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
+from constants import HIGH_RISK_THRESHOLD, MEDIUM_RISK_THRESHOLD, OPEN_STAGES
 
 
 def render(df: pd.DataFrame, model: str) -> None:
-    st.header("Leader View — Win/Loss Signal Intelligence")
-    st.caption("Pattern analysis across the full pipeline. No per-deal calls required.")
+    ui.page_intro(
+        title="Signal Intelligence",
+        what="Patterns across the whole pipeline — the most common risk signals, how risk is spread "
+             "across reps, and a one-paragraph strategic takeaway from Claude.",
+        who="For sales leaders",
+        try_this="scan the charts, then click <b>Refresh Insight</b>.",
+    )
 
     open_df = df[df["stage"].isin(OPEN_STAGES)].copy()
     if open_df.empty:
@@ -90,9 +95,9 @@ def render(df: pd.DataFrame, model: str) -> None:
         rep_stats["Avg Risk"] = rep_stats["Avg Risk"].round(1)
 
         def _bar_color(score):
-            if score >= 70:
+            if score >= HIGH_RISK_THRESHOLD:
                 return "#ef4444"
-            if score >= 40:
+            if score >= MEDIUM_RISK_THRESHOLD:
                 return "#f59e0b"
             return "#22c55e"
 

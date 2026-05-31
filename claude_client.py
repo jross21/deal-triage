@@ -1,8 +1,11 @@
 import json
+import logging
 import os
 from pathlib import Path
 
 from anthropic import Anthropic
+
+logger = logging.getLogger(__name__)
 
 PROMPT_DIR = Path("prompts")
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
@@ -14,10 +17,60 @@ _FOLLOWUP_SYSTEM = (
     "No filler phrases like 'I hope this finds you well.' Sound human and specific to this deal."
 )
 
+# Lazily-created module-level client so we don't re-instantiate per call.
+_CLIENT: Anthropic | None = None
+
+
+def _client() -> Anthropic:
+    global _CLIENT
+    if _CLIENT is None:
+        _CLIENT = Anthropic()
+    return _CLIENT
+
 
 def _load_prompt(name: str) -> str:
     path = PROMPT_DIR / f"{name}.md"
     return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def _complete(prompt: str, model: str, max_tokens: int, system=None) -> str | None:
+    """Single entry point for a text completion. Returns stripped text or None.
+
+    Logs the failure instead of swallowing it silently. `system` may be a plain
+    string or a list of content blocks (used for prompt caching).
+    """
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return None
+    try:
+        kwargs = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if system is not None:
+            kwargs["system"] = system
+        response = _client().messages.create(**kwargs)
+        return response.content[0].text.strip()
+    except Exception:
+        logger.exception("Claude completion failed (model=%s)", model)
+        return None
+
+
+def _complete_json(prompt: str, model: str, max_tokens: int, system=None) -> dict | None:
+    """Completion that expects a JSON object. Extracts the outermost {...}."""
+    text = _complete(prompt, model, max_tokens, system=system)
+    if not text:
+        return None
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start == -1 or end == 0:
+        logger.warning("Claude response contained no JSON object (model=%s)", model)
+        return None
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        logger.exception("Failed to parse JSON from Claude response (model=%s)", model)
+        return None
 
 
 def _estimate_tier(row: dict, has_transcript: bool) -> str:
@@ -40,15 +93,9 @@ def analyze_deal(row: dict, transcript: str = "", model: str = DEFAULT_MODEL) ->
                buying_process_analysis, recommended_actions}
     Returns None if the API key is missing or the call fails.
     """
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return None
-
     prompt_template = _load_prompt("deal_risk_explanation")
     if not prompt_template:
         return None
-
-    from datetime import date
-    TODAY = date.today()
 
     stage_median = int(row.get("_stage_median") or 14)
     deal_data = "\n".join([
@@ -72,30 +119,33 @@ def analyze_deal(row: dict, transcript: str = "", model: str = DEFAULT_MODEL) ->
         f"\nCall transcript excerpt:\n{transcript[:2500]}" if transcript else ""
     )
 
-    prompt = (
-        prompt_template
+    # Split the template into a static instruction prefix (sent as a cached
+    # system block, identical across all deals in a batch) and the per-deal
+    # data (the user message). The prompt file's data placeholders live under
+    # the "Deal data:" marker, so split there.
+    marker = "Deal data:"
+    idx = prompt_template.find(marker)
+    if idx != -1:
+        instructions = prompt_template[:idx].rstrip()
+        data_template = prompt_template[idx:]
+    else:
+        instructions = prompt_template
+        data_template = "{deal_data}{transcript_section}"
+
+    user_content = (
+        data_template
         .replace("{deal_data}", deal_data)
         .replace("{transcript_section}", transcript_section)
     )
+    # NOTE: prompt caching only activates once the system prefix exceeds the
+    # model minimum (Sonnet 4.6: 2048 tokens, Haiku 4.5: 4096). Today's
+    # instruction block is below that, so this is a harmless no-op that starts
+    # paying off automatically if the prompt grows.
+    system = [{"type": "text", "text": instructions, "cache_control": {"type": "ephemeral"}}]
 
     tier = _estimate_tier(row, bool(transcript))
     max_tokens = 1024 if tier == "High" else 512
-
-    try:
-        client = Anthropic()
-        response = client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = response.content[0].text.strip()
-        start = text.find("{")
-        end = text.rfind("}") + 1
-        if start == -1 or end == 0:
-            return None
-        return json.loads(text[start:end])
-    except Exception:
-        return None
+    return _complete_json(user_content, model, max_tokens, system=system)
 
 
 def generate_followup_email(row: dict, analysis: dict, model: str = DEFAULT_MODEL) -> str | None:
@@ -103,9 +153,6 @@ def generate_followup_email(row: dict, analysis: dict, model: str = DEFAULT_MODE
 
     Returns plain text with 'Subject: ...' on the first line, or None on failure.
     """
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return None
-
     confidence = analysis.get("confidence", "")
     if confidence == "High":
         context_block = analysis.get("buying_process_analysis", "")
@@ -124,17 +171,7 @@ def generate_followup_email(row: dict, analysis: dict, model: str = DEFAULT_MODE
         f"Recommended action: {action}",
     ])
 
-    try:
-        client = Anthropic()
-        response = client.messages.create(
-            model=model,
-            max_tokens=300,
-            system=_FOLLOWUP_SYSTEM,
-            messages=[{"role": "user", "content": user_content}],
-        )
-        return response.content[0].text.strip()
-    except Exception:
-        return None
+    return _complete(user_content, model, max_tokens=300, system=_FOLLOWUP_SYSTEM)
 
 
 def generate_pre_call_brief(
@@ -145,9 +182,6 @@ def generate_pre_call_brief(
     Returns dict with keys: context, objections, agenda, questions.
     Returns None if API key missing or call fails.
     """
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return None
-
     prompt_template = _load_prompt("pre_call_brief")
     if not prompt_template:
         return None
@@ -180,21 +214,7 @@ def generate_pre_call_brief(
     elif transcript_section:
         prompt += transcript_section
 
-    try:
-        client = Anthropic()
-        response = client.messages.create(
-            model=model,
-            max_tokens=800,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = response.content[0].text.strip()
-        start = text.find("{")
-        end = text.rfind("}") + 1
-        if start == -1 or end == 0:
-            return None
-        return json.loads(text[start:end])
-    except Exception:
-        return None
+    return _complete_json(prompt, model, max_tokens=800)
 
 
 def generate_pipeline_review(rep_summaries: list, model: str = DEFAULT_MODEL) -> dict | None:
@@ -204,9 +224,6 @@ def generate_pipeline_review(rep_summaries: list, model: str = DEFAULT_MODEL) ->
     Returns dict with keys: pulse (str), reps (list of {rep_name, questions}).
     Returns None if API key missing or call fails.
     """
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return None
-
     prompt_template = _load_prompt("pipeline_review")
     if not prompt_template:
         return None
@@ -222,22 +239,7 @@ def generate_pipeline_review(rep_summaries: list, model: str = DEFAULT_MODEL) ->
     rep_block = "\n".join(lines) if lines else "No high-risk deals found."
 
     prompt = prompt_template.replace("{rep_summaries}", rep_block)
-
-    try:
-        client = Anthropic()
-        response = client.messages.create(
-            model=model,
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = response.content[0].text.strip()
-        start = text.find("{")
-        end = text.rfind("}") + 1
-        if start == -1 or end == 0:
-            return None
-        return json.loads(text[start:end])
-    except Exception:
-        return None
+    return _complete_json(prompt, model, max_tokens=1024)
 
 
 def generate_strategic_insight(
@@ -249,9 +251,6 @@ def generate_strategic_insight(
     rep_profiles: list of dicts with rep_name, avg_risk, deal_count.
     Returns a plain-text paragraph string, or None on failure.
     """
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return None
-
     prompt_template = _load_prompt("strategic_insight")
     if not prompt_template:
         return None
@@ -268,13 +267,4 @@ def generate_strategic_insight(
         .replace("{rep_profiles}", rep_lines or "No rep data available.")
     )
 
-    try:
-        client = Anthropic()
-        response = client.messages.create(
-            model=model,
-            max_tokens=300,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return response.content[0].text.strip()
-    except Exception:
-        return None
+    return _complete(prompt, model, max_tokens=300)

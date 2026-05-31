@@ -47,6 +47,48 @@ def _make_mock_response(payload: dict):
     return mock_msg
 
 
+ANALYZE_RESPONSE = {
+    "confidence": "Low",
+    "quotes": [],
+    "brief": "Deal is mid-cycle with no acute signals.",
+    "next_action": "Confirm the economic buyer is engaged before the next call.",
+}
+
+
+def test_analyze_deal_uses_cached_system_block_and_data_in_user_message(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    prompt_dir = tmp_path / "prompts"
+    prompt_dir.mkdir()
+    # Mirror the real template's instruction/data boundary at "Deal data:".
+    (prompt_dir / "deal_risk_explanation.md").write_text(
+        "You are a RevOps analyst. Assess the deal.\n\nDeal data:\n{deal_data}{transcript_section}"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    import claude_client as cc
+    reload(cc)
+
+    with patch("claude_client.Anthropic") as mock_anthropic_cls:
+        mock_client = MagicMock()
+        mock_anthropic_cls.return_value = mock_client
+        mock_client.messages.create.return_value = _make_mock_response(ANALYZE_RESPONSE)
+
+        result = cc.analyze_deal(SAMPLE_ROW.to_dict(), transcript="Budget freeze mentioned.",
+                                 model="claude-haiku-4-5-20251001")
+
+    assert result == ANALYZE_RESPONSE
+    kwargs = mock_client.messages.create.call_args.kwargs
+    # Static instructions go in a cached system block...
+    system = kwargs["system"]
+    assert system[0]["cache_control"] == {"type": "ephemeral"}
+    assert "RevOps analyst" in system[0]["text"]
+    assert "Deal data:" not in system[0]["text"]
+    # ...and the per-deal data + transcript go in the user message.
+    user_content = kwargs["messages"][0]["content"]
+    assert "Harbor Systems" in user_content
+    assert "Budget freeze mentioned." in user_content
+
+
 def test_generate_pre_call_brief_returns_required_keys(tmp_path, monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     # Create minimal prompt file

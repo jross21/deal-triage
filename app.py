@@ -1,6 +1,7 @@
 import html
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 from pathlib import Path
 
@@ -11,17 +12,17 @@ import streamlit as st
 import claude_client
 import hubspot_client
 import feedback as feedback_store
+import ui
+from constants import MIN_BENCHMARK_SAMPLE, OPEN_STAGES, STAGE_THRESHOLDS, TOP_N
+from scoring import compute_risk_breakdown, compute_stage_benchmarks, risk_tier, score_deals
+from transcripts import find_transcript
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 TODAY = date.today()
 SAMPLE_CSV = Path("data/sample/opportunities.csv")
-TRANSCRIPT_DIR = Path("data/sample/transcripts")
 METHODOLOGY_MD = Path("METHODOLOGY.md")
-TOP_N = 10
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
-STAGE_THRESHOLDS = {"Discovery": 14, "Demo": 14, "Proposal": 21, "Negotiation": 21}
 
 # Per-tier expander border styles (dark mode / light mode)
 _TIER_BORDER = {
@@ -29,11 +30,6 @@ _TIER_BORDER = {
     "medium": "border:1px solid #fde68a!important;box-shadow:0 2px 8px rgba(245,158,11,0.08)!important;",
     "low":    "border:1px solid #e2e8f0!important;",
 }
-MIN_BENCHMARK_SAMPLE = 5
-
-
-def _risk_tier(score):
-    return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
 
 
 def _format_pull_timestamp(dt: datetime) -> str:
@@ -46,88 +42,41 @@ def _format_pull_timestamp(dt: datetime) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Cached Claude analysis
 # ---------------------------------------------------------------------------
+# Persist analysis across reruns/refreshes so a page reload doesn't re-pay for
+# the top-10 calls. Keyed on deal_id + model + a fingerprint of the scored
+# fields and transcript, so it re-analyzes only when the inputs actually change.
+# Failures (None) are raised so they are NOT cached — the next run retries.
 
-def find_transcript(deal_id):
-    matches = list(TRANSCRIPT_DIR.glob(f"{deal_id}_*.txt"))
-    return matches[0].read_text(encoding="utf-8") if matches else ""
-
-
-# ---------------------------------------------------------------------------
-# Scoring (unchanged from v1.4)
-# ---------------------------------------------------------------------------
-
-def compute_stage_benchmarks(df):
-    """Compute median days_in_stage per stage from full pipeline history."""
-    benchmarks = dict(STAGE_THRESHOLDS)
-    for stage, group in df.groupby("stage"):
-        if len(group) >= MIN_BENCHMARK_SAMPLE:
-            try:
-                median = int(group["days_in_stage"].median())
-                if median > 0:
-                    benchmarks[stage] = median
-            except (TypeError, ValueError):
-                pass
-    return benchmarks
+class _AnalysisFailed(Exception):
+    pass
 
 
-def compute_risk_breakdown(row, benchmarks=None):
-    """Return (total_score, breakdown_dict) for a deal row."""
-    stage = row.get("stage", "")
-    threshold = (benchmarks or STAGE_THRESHOLDS).get(stage, 14)
+@st.cache_data(show_spinner=False)
+def _cached_analyze(deal_id, model, fingerprint, _row, _transcript):
+    result = claude_client.analyze_deal(_row, _transcript, model)
+    if result is None:
+        raise _AnalysisFailed
+    return result
 
+
+def analyze_fingerprint(row, transcript) -> str:
+    return "|".join(str(x) for x in (
+        row.get("risk_score"), row.get("stage"), row.get("days_in_stage"),
+        row.get("last_activity_date"), row.get("close_date"), len(transcript),
+    ))
+
+
+def cached_analyze(row, transcript, model):
+    """Cached wrapper around claude_client.analyze_deal; returns None on failure."""
     try:
-        days_in = int(row.get("days_in_stage", 0))
-    except (ValueError, TypeError):
-        days_in = 0
-    stage_pts = min(40, int(days_in / threshold * 20))
-
-    try:
-        last_act = date.fromisoformat(str(row["last_activity_date"]))
-        stale = max(0, (TODAY - last_act).days)
-        if stale >= 21:
-            act_pts = 30
-        elif stale >= 14:
-            act_pts = 22
-        elif stale >= 7:
-            act_pts = 14
-        else:
-            act_pts = int(stale / 7 * 14)
-    except (ValueError, TypeError, KeyError):
-        act_pts = 15
-
-    try:
-        close = date.fromisoformat(str(row["close_date"]))
-        days_until = (close - TODAY).days
-        if days_until < 0:
-            close_pts = 30
-        elif days_until < 14:
-            close_pts = 25
-        elif days_until <= 30:
-            close_pts = 15
-        elif days_until <= 60:
-            close_pts = 5
-        else:
-            close_pts = 0
-    except (ValueError, TypeError, KeyError):
-        close_pts = 10
-
-    total = min(100, stage_pts + act_pts + close_pts)
-    return total, {"stage_pts": stage_pts, "act_pts": act_pts, "close_pts": close_pts}
-
-
-def score_deals(df):
-    """Filter to open stages, score all deals, return sorted descending."""
-    benchmarks = compute_stage_benchmarks(df)
-    open_df = df[df["stage"].isin(OPEN_STAGES)].copy()
-    results = open_df.apply(lambda r: compute_risk_breakdown(r.to_dict(), benchmarks), axis=1)
-    open_df["risk_score"]    = results.apply(lambda x: x[0])
-    open_df["_stage_pts"]    = results.apply(lambda x: x[1]["stage_pts"])
-    open_df["_act_pts"]      = results.apply(lambda x: x[1]["act_pts"])
-    open_df["_close_pts"]    = results.apply(lambda x: x[1]["close_pts"])
-    open_df["_stage_median"] = open_df["stage"].map(benchmarks)
-    return open_df.sort_values("risk_score", ascending=False).reset_index(drop=True)
+        return _cached_analyze(
+            str(row["deal_id"]), model, analyze_fingerprint(row, transcript),
+            _row=row, _transcript=transcript,
+        )
+    except _AnalysisFailed:
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -186,26 +135,79 @@ CSS_THEME = """
 .badge-low    { background: #dcfce7; color: #166534; }
 """
 
+# ── Shared component classes (used by ui.py across all pages) ────────────────
+CSS_COMPONENTS = """
+.intro-card {
+    background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7;
+    border-radius: 10px; padding: 1.1rem 1.25rem; margin-bottom: 1.25rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.intro-title { font-size: 1.35rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; line-height: 1.25; }
+.intro-what { color: #475569; margin-top: 0.35rem; line-height: 1.55; font-size: 0.95rem; }
+.intro-meta { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.8rem; }
+.who-chip {
+    background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 99px;
+    padding: 2px 11px; font-size: 0.72rem; font-weight: 600;
+}
+.try-nudge { color: #64748b; font-size: 0.82rem; }
+.section-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+    color: #64748b; margin: 0.9rem 0 0.35rem 0;
+}
+.callout { border-radius: 8px; padding: 0.65rem 1rem; font-size: 0.875rem; margin-bottom: 1rem; }
+.callout-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+.callout-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.tier-legend { display: flex; gap: 1.1rem; color: #64748b; font-size: 0.78rem; margin: 0.1rem 0 0.85rem; }
+.tier-legend b { font-size: 0.9rem; }
+.view-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.1rem 1.2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); height: 100%;
+}
+.view-card .vc-title { font-weight: 700; color: #0f172a; font-size: 1.02rem; }
+.view-card .vc-who {
+    color: #0284c7; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-top: 0.15rem;
+}
+.view-card .vc-what { color: #475569; font-size: 0.88rem; margin-top: 0.5rem; line-height: 1.5; }
+.step-row { display: flex; gap: 0.8rem; align-items: flex-start; margin-bottom: 0.7rem; }
+.step-num {
+    flex-shrink: 0; width: 1.65rem; height: 1.65rem; border-radius: 99px;
+    background: #0284c7; color: #fff; font-weight: 700; font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.step-text { color: #334155; line-height: 1.5; }
+.step-text b { color: #0f172a; }
+"""
+
 # Inject all CSS
 st.markdown(
-    f"<style>{CSS_SHARED}{CSS_THEME}</style>",
+    f"<style>{CSS_SHARED}{CSS_THEME}{CSS_COMPONENTS}</style>",
     unsafe_allow_html=True,
 )
 
 # ---------------------------------------------------------------------------
 # Sidebar navigation (top of sidebar, before all other controls)
 # ---------------------------------------------------------------------------
+ui.section_label("View", container=st.sidebar)
 page = st.sidebar.radio(
-    "Navigate",
-    ["Pipeline", "Rep Tools", "Manager View", "Leader Dashboard"],
+    "View",
+    ["Overview", "Pipeline", "Rep Tools", "Manager View", "Leader Dashboard"],
+    captions=[
+        "Start here",
+        "Reps & RevOps · triage at-risk deals",
+        "Reps · prep for a call",
+        "Managers · run the pipeline review",
+        "Leaders · spot pipeline-wide patterns",
+    ],
     label_visibility="collapsed",
+    key="nav_page",
 )
 
-# Header
+# Header (brand bar — shown on every page)
 st.markdown("""
-<div style="padding:0 0 1.5rem 0">
-  <div style="font-size:1.75rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;line-height:1.2">Deal Triage</div>
-  <div style="color:#64748b;margin-top:0.35rem;font-size:0.9rem">Surface and act on the deals most likely to slip this quarter.</div>
+<div style="padding:0 0 1.25rem 0">
+  <div style="font-size:1.6rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;line-height:1.2">Deal Triage</div>
+  <div style="color:#64748b;margin-top:0.3rem;font-size:0.9rem">Spot the deals about to slip — and see why.</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -215,11 +217,7 @@ st.markdown("""
 # ---------------------------------------------------------------------------
 # Data Source selector
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(
-    "<div style='font-size:0.7rem;font-weight:600;text-transform:uppercase;"
-    "letter-spacing:0.06em;color:#64748b;margin-bottom:0.4rem'>Data Source</div>",
-    unsafe_allow_html=True,
-)
+ui.section_label("Data source", container=st.sidebar)
 source = st.sidebar.radio(
     "source",
     ["🔗 HubSpot", "📁 Upload CSV", "🧪 Sample Data"],
@@ -227,6 +225,7 @@ source = st.sidebar.radio(
     label_visibility="collapsed",
     key="data_source",
 )
+st.sidebar.caption("Demo data is loaded by default — no setup needed.")
 
 if source == "🔗 HubSpot":
     if not hubspot_client.is_connected():
@@ -318,25 +317,36 @@ if missing_cols:
 scored = score_deals(df_raw)
 
 # ---------------------------------------------------------------------------
-# Sidebar — shared controls
+# Sidebar — shared controls (hidden on the Overview landing page to keep it clean)
 # ---------------------------------------------------------------------------
-all_owners = sorted(scored["owner"].unique().tolist())
-selected_owner = st.sidebar.selectbox(
-    "Filter by owner",
-    ["All"] + all_owners,
-    help="Filter the at-risk deals by account executive.",
-)
-filtered = scored[scored["owner"] == selected_owner] if selected_owner != "All" else scored
-
-model_choice = st.sidebar.selectbox(
-    "Claude model",
-    ["Haiku (fast)", "Sonnet (deeper)"],
-    help="Haiku is faster and cheaper. Sonnet produces richer analysis.",
-)
-ACTIVE_MODEL = (
-    "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
-)
 api_key = os.getenv("ANTHROPIC_API_KEY")
+
+if page == "Overview":
+    # Overview only reads the full scored set; skip the per-page controls.
+    filtered = scored
+    selected_owner = "All"
+    ACTIVE_MODEL = "claude-haiku-4-5-20251001"
+else:
+    ui.section_label("Filter", container=st.sidebar)
+    all_owners = sorted(scored["owner"].unique().tolist())
+    selected_owner = st.sidebar.selectbox(
+        "Account executive",
+        ["All"] + all_owners,
+        help="Show only deals owned by one rep.",
+    )
+    filtered = scored[scored["owner"] == selected_owner] if selected_owner != "All" else scored
+
+    ui.section_label("AI model", container=st.sidebar)
+    model_choice = st.sidebar.selectbox(
+        "Claude model",
+        ["Haiku (fast)", "Sonnet (deeper)"],
+        label_visibility="collapsed",
+        help="Haiku is faster and cheaper. Sonnet produces richer analysis.",
+    )
+    ACTIVE_MODEL = (
+        "claude-haiku-4-5-20251001" if "Haiku" in model_choice else "claude-sonnet-4-6"
+    )
+
 st.sidebar.markdown(
     "<div style='padding-top:1rem;color:#334155;font-size:0.65rem;"
     "text-transform:uppercase;letter-spacing:0.07em'>Deal Triage · v2.0</div>",
@@ -349,6 +359,11 @@ if "explanations" not in st.session_state:
 # ---------------------------------------------------------------------------
 # Page routing
 # ---------------------------------------------------------------------------
+if page == "Overview":
+    from views.overview import render as render_overview
+    render_overview(scored)
+    st.stop()
+
 if page == "Rep Tools":
     from views.rep_tools import render as render_rep
     render_rep(scored, st.session_state.explanations, ACTIVE_MODEL)
@@ -367,7 +382,7 @@ if page == "Leader Dashboard":
 # ---------------------------------------------------------------------------
 # Pipeline page (default)
 # ---------------------------------------------------------------------------
-tab_main, tab_method = st.tabs(["📊 Deal Triage", "📖 Methodology"])
+tab_main, tab_method = st.tabs(["📊 At-Risk Deals", "📖 How scoring works"])
 
 # ---------------------------------------------------------------------------
 # Methodology tab
@@ -384,44 +399,24 @@ with tab_method:
 with tab_main:
 
     # -----------------------------------------------------------------------
-    # Onboarding banner
+    # Page intro + brief "how the score works" (full explanation in the tab)
     # -----------------------------------------------------------------------
-    if "onboarding_seen" not in st.session_state:
-        st.session_state.onboarding_seen = False
+    ui.page_intro(
+        title="At-Risk Deals",
+        what="Every open deal ranked 0–100 by how likely it is to slip. Claude explains the "
+             "riskiest 10 and drafts a follow-up you can send.",
+        who="For reps & RevOps",
+        try_this="click <b>Analyze with Claude</b> below the table.",
+    )
 
-    with st.expander("ℹ️ How to use Deal Triage", expanded=not st.session_state.onboarding_seen):
-        st.markdown("""
-**Deal Triage is a pipeline intelligence tool for B2B SaaS sales teams.** It scores every open deal \
-on three risk signals — stage stagnation, activity recency, and close date pressure — then uses Claude \
-to surface the specific reasons each deal is at risk and recommend concrete actions.
-
-**Step 1 — Upload your CRM export**
-Upload a CSV with these columns: `deal_id`, `account_name`, `stage`, `amount`, `close_date`, \
-`days_in_stage`, `last_activity_date`, `next_step`, `owner`, `industry`, `employee_count`. \
-Stages should include Discovery, Demo, Proposal, and Negotiation for open deals. \
-Or explore with the built-in 100-deal sample pipeline — no upload needed.
-
-**Step 2 — Review pipeline health**
-The Pipeline Health chart shows open deals by stage, color-coded by risk tier \
-(🔴 High ≥ 70 · 🟡 Medium ≥ 40 · 🟢 Low < 40). \
-The metrics at the top show total open deal count, high-risk deal count, and total open pipeline value.
-
-**Step 3 — Analyze deals with Claude**
-Click "Analyze with Claude" to generate AI analysis on the top 10 at-risk deals. \
-High-confidence deals (strong heuristic signals plus a call transcript) receive a **full deal memo** — \
-verbatim transcript quotes, a buying process analysis reading the subtext, and prioritized recommended actions. \
-Lower-confidence deals get a focused brief with one concrete next step.
-
-**Step 4 — Act and provide feedback**
-Each deal card shows Claude's recommended action. Use **👍 Helpful / 👎 Off-target** to rate the analysis — \
-feedback is saved locally to help tune the model over time. \
-Use **✉ Draft follow-up email** to generate a ready-to-send email draft from the deal context.
-
-> **How risk scores work:** 40 pts from time in stage vs. team median · 30 pts from activity recency · \
-30 pts from close date proximity. See the **Methodology** tab for the full explanation.
-        """)
-
-    st.session_state.onboarding_seen = True
+    with st.expander("How the 0–100 score works"):
+        st.markdown(
+            "Each open deal earns risk points from three signals — higher means more likely to slip:\n\n"
+            "- **Stuck in stage** (up to 40) — how long it's sat in its current stage vs. your team's typical time.\n"
+            "- **Gone quiet** (up to 30) — days since the last logged activity.\n"
+            "- **Close date slipping** (up to 30) — how close (or past) the expected close date is.\n\n"
+            "See the **How scoring works** tab for the full methodology."
+        )
 
     top10 = filtered.head(TOP_N).copy()
 
@@ -444,17 +439,17 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     c1.metric(
         "Open Deals",
         len(filtered),
-        help="Count of deals in active stages (Discovery, Demo, Proposal, Negotiation). Excludes Closed Won/Lost.",
+        help="Deals still in play (Discovery, Demo, Proposal, Negotiation). Closed deals are excluded.",
     )
     c2.metric(
-        "Top At-Risk",
+        "High-Risk Deals",
         len(filtered[filtered["risk_score"] >= 70]),
-        help="Deals scoring ≥ 70/100 on the composite risk score. Risk = time in stage + activity staleness + close date pressure.",
+        help="Deals scoring 70 or higher out of 100 — the ones most likely to slip.",
     )
     c3.metric(
         "Open Pipeline",
         f"${int(filtered['amount'].sum()):,}",
-        help="Total dollar value of open deals. Does not include Closed Won or Closed Lost.",
+        help="Total dollar value of all open deals shown here.",
     )
 
     st.divider()
@@ -465,11 +460,13 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     _STAGE_ORDER = ["Discovery", "Demo", "Proposal", "Negotiation"]
     _TIER_COLORS = ["#dc2626", "#d97706", "#16a34a"]
 
-    st.subheader("Pipeline Health")
+    st.subheader("Open deals by stage")
+    st.caption("Each bar is one stage; colors show how many deals fall in each risk tier.")
+    ui.tier_legend()
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
 
     chart_df = filtered.copy()
-    chart_df["Risk Tier"] = chart_df["risk_score"].apply(_risk_tier)
+    chart_df["Risk Tier"] = chart_df["risk_score"].apply(risk_tier)
     chart_df["stage"] = pd.Categorical(chart_df["stage"], categories=_STAGE_ORDER, ordered=True)
 
     pipeline_chart = (
@@ -497,7 +494,8 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     # -----------------------------------------------------------------------
     # Summary table
     # -----------------------------------------------------------------------
-    st.subheader("Top 10 At-Risk Deals")
+    st.subheader("The 10 most at-risk deals")
+    st.caption("Ranked highest-risk first. 🎙 marks deals with a call transcript Claude can quote from.")
 
     table_df = top10[["account_name", "stage", "amount", "close_date",
                        "days_in_stage", "risk_score", "owner"]].copy()
@@ -547,12 +545,27 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             )
         if analyze:
             st.session_state.explanations = {}
+            rows = [r.to_dict() for _, r in top10.iterrows()]
             with st.status("Analyzing top deals with Claude…", expanded=True) as _status:
-                for _, row in top10.iterrows():
-                    _status.write(f"🔍 {row['account_name']}…")
-                    transcript = _transcripts.get(str(row["deal_id"]), "")
-                    result = claude_client.analyze_deal(row.to_dict(), transcript, ACTIVE_MODEL)
-                    st.session_state.explanations[row["deal_id"]] = result
+                # Warm the cached system prefix with the first deal sequentially,
+                # then fan the rest out concurrently — the warm call populates the
+                # prompt cache so the parallel calls can read it (and it's much
+                # faster than the old one-at-a-time loop either way).
+                def _run(r):
+                    return r["deal_id"], cached_analyze(
+                        r, _transcripts.get(str(r["deal_id"]), ""), ACTIVE_MODEL
+                    )
+
+                if rows:
+                    _status.write(f"🔍 {rows[0]['account_name']}…")
+                    did, result = _run(rows[0])
+                    st.session_state.explanations[did] = result
+
+                if len(rows) > 1:
+                    _status.write(f"🔍 Analyzing {len(rows) - 1} more deals in parallel…")
+                    with ThreadPoolExecutor(max_workers=5) as pool:
+                        for did, result in pool.map(_run, rows[1:]):
+                            st.session_state.explanations[did] = result
                 _status.update(label="Analysis complete", state="complete", expanded=False)
     else:
         st.markdown(
@@ -592,6 +605,37 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         )
 
     # -----------------------------------------------------------------------
+    # Analysis feedback summary (closes the 👍/👎 loop)
+    # -----------------------------------------------------------------------
+    _fb = feedback_store.summarize_feedback()
+    if _fb["total"]:
+        with st.expander(
+            f"📊 Analysis feedback · {_fb['total']} rating{'s' if _fb['total'] != 1 else ''}"
+            + (f" · {_fb['helpful_rate']:.0f}% helpful" if _fb['helpful_rate'] is not None else "")
+        ):
+            cols = st.columns(3)
+            for col, tier in zip(cols, feedback_store.TIERS):
+                stats = _fb["by_tier"][tier]
+                rate = stats["helpful_rate"]
+                value = f"{rate:.0f}%" if rate is not None else "—"
+                col.metric(
+                    f"{tier} confidence",
+                    value,
+                    help=f"{stats['positive']}/{stats['total']} rated helpful.",
+                )
+                # Flag tiers that look like they need prompt tuning.
+                if rate is not None and stats["total"] >= MIN_BENCHMARK_SAMPLE and rate < 50:
+                    col.markdown(
+                        "<span style='color:#b91c1c;font-size:0.75rem;font-weight:600'>"
+                        "⚠ Needs prompt tuning</span>",
+                        unsafe_allow_html=True,
+                    )
+            st.caption(
+                "Helpful rate from 👍/👎 ratings, stored locally. Tiers below 50% with a "
+                f"meaningful sample (≥{MIN_BENCHMARK_SAMPLE}) are flagged for prompt tuning."
+            )
+
+    # -----------------------------------------------------------------------
     # Per-deal expanders
     # -----------------------------------------------------------------------
     st.subheader("Deal Detail")
@@ -608,7 +652,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         with st.expander(label, expanded=(rank == 1)):
 
             # Inject risk-tier border via :has() selector scoped to this deal's unique ID
-            _tier_key = _risk_tier(row["risk_score"]).lower()
+            _tier_key = risk_tier(row["risk_score"]).lower()
             _border_css = _TIER_BORDER[_tier_key]
             _safe_id = re.sub(r'[^A-Za-z0-9_-]', '', str(row["deal_id"]))
             st.markdown(
@@ -656,12 +700,30 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             stage_median = int(row.get("_stage_median") or STAGE_THRESHOLDS.get(row["stage"], 14))
             days_in      = int(row["days_in_stage"])
             multiple     = f"{days_in / stage_median:.1f}×" if stage_median > 0 else ""
-            st.caption(
-                f"Stage stagnation: {int(row['_stage_pts'])}/40  ·  "
-                f"Activity gap: {int(row['_act_pts'])}/30  ·  "
-                f"Close pressure: {int(row['_close_pts'])}/30"
+
+            # Plain-language "why" derived from which signals are elevated.
+            _why = []
+            if int(row["_stage_pts"]) >= 20:
+                _why.append(f"stuck {multiple} the typical {stage_median}-day time in {row['stage']}")
+            if int(row["_act_pts"]) >= 22:
+                _why.append("no recent activity")
+            elif int(row["_act_pts"]) >= 14:
+                _why.append("activity slowing down")
+            _cp = int(row["_close_pts"])
+            if _cp >= 30:
+                _why.append("past its close date")
+            elif _cp >= 25:
+                _why.append("close date within two weeks")
+            elif _cp >= 15:
+                _why.append("close date approaching")
+            st.markdown(
+                f"**Why it's risky:** {'; '.join(_why) if _why else 'only mild signals — worth a glance'}."
             )
-            st.caption(f"{days_in} days in {row['stage']} — {multiple} the {stage_median}-day median")
+            st.caption(
+                f"Score breakdown — Stuck in stage {int(row['_stage_pts'])}/40  ·  "
+                f"Gone quiet {int(row['_act_pts'])}/30  ·  "
+                f"Close date {int(row['_close_pts'])}/30"
+            )
 
             next_step = row.get("next_step") or "—"
             st.write(f"**Owner:** {row['owner']}  |  **Next Step:** {next_step}")
@@ -674,10 +736,14 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
                 confidence = analysis.get("confidence", "")
                 badge_html = CONFIDENCE_BADGE.get(confidence, "")
                 st.markdown(
-                    f"<div style='margin-bottom:0.75rem'>"
-                    f"<strong>Why This Deal</strong>&nbsp;&nbsp;{badge_html} confidence"
+                    f"<div style='margin-bottom:0.2rem'>"
+                    f"<strong>Claude's take</strong>&nbsp;&nbsp;{badge_html} confidence"
                     f"</div>",
                     unsafe_allow_html=True,
+                )
+                st.caption(
+                    "Confidence reflects how much evidence Claude had — strong signals plus a "
+                    "call transcript earn a fuller write-up."
                 )
 
                 # Verbatim transcript quotes as evidence

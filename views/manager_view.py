@@ -5,14 +5,18 @@ import pandas as pd
 import streamlit as st
 
 import claude_client
-
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
-HIGH_RISK_THRESHOLD = 60
+import ui
+from constants import HIGH_RISK_THRESHOLD, OPEN_STAGES
 
 
 def render(df: pd.DataFrame, explanations: dict, model: str) -> None:
-    st.header("Manager View — Pipeline Review")
-    st.caption("Generate a structured agenda for your weekly pipeline call.")
+    ui.page_intro(
+        title="Pipeline Review",
+        what="A ready-to-run agenda for your weekly pipeline call — a quick pulse on the team, then "
+             "per-rep deals to inspect and pointed questions to ask.",
+        who="For sales managers",
+        try_this="click <b>Generate Agenda</b>.",
+    )
 
     open_df = df[df["stage"].isin(OPEN_STAGES)].copy()
     if open_df.empty:

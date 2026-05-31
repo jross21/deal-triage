@@ -1,10 +1,9 @@
 import re
-from datetime import date
-from pathlib import Path
 
 import pandas as pd
 
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
+from constants import OPEN_STAGES
+from transcripts import find_transcript
 
 
 def compute_high_risk_rate(df: pd.DataFrame) -> float:
@@ -53,17 +52,14 @@ def compute_signal_counts(df: pd.DataFrame, transcripts_dir: str = "data/sample/
     # Transcript keyword signals
     budget_count = 0
     competitor_count = 0
-    tx_path = Path(transcripts_dir)
-    if tx_path.exists():
-        for _, row in open_df.iterrows():
-            matches = list(tx_path.glob(f"{row['deal_id']}_*.txt"))
-            if not matches:
-                continue
-            text = matches[0].read_text(encoding="utf-8").lower()
-            if re.search(r"\b(budget|freeze|cost|pricing|expensive)\b", text):
-                budget_count += 1
-            if re.search(r"\b(competitor|competing|alternative|versus|vs\.?)\b", text):
-                competitor_count += 1
+    for _, row in open_df.iterrows():
+        text = find_transcript(row["deal_id"], directory=transcripts_dir).lower()
+        if not text:
+            continue
+        if re.search(r"\b(budget|freeze|cost|pricing|expensive)\b", text):
+            budget_count += 1
+        if re.search(r"\b(competitor|competing|alternative|versus|vs\.?)\b", text):
+            competitor_count += 1
 
     return {
         "Stage stagnation ≥2× median": stagnation_count,
