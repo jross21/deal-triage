@@ -1,14 +1,12 @@
 import html
 import os
-from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 import claude_client
-
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
-TRANSCRIPT_DIR = Path("data/sample/transcripts")
+from constants import OPEN_STAGES
+from transcripts import find_transcript
 
 
 def render(df: pd.DataFrame, explanations: dict, model: str) -> None:
@@ -37,7 +35,7 @@ def render(df: pd.DataFrame, explanations: dict, model: str) -> None:
     with col_btn:
         generate = st.button("Generate Brief", type="primary")
     with col_note:
-        has_tx = bool(_load_transcript(str(selected_row["deal_id"])))
+        has_tx = bool(find_transcript(str(selected_row["deal_id"]), max_chars=2500))
         st.caption("🎙 Transcript available — brief will include verbatim evidence." if has_tx else "No transcript — brief based on CRM signals only.")
 
     if generate:
@@ -45,7 +43,7 @@ def render(df: pd.DataFrame, explanations: dict, model: str) -> None:
             st.error("Add ANTHROPIC_API_KEY to .env and restart.")
             return
         with st.spinner("Generating pre-call brief…"):
-            transcript = _load_transcript(str(selected_row["deal_id"]))
+            transcript = find_transcript(str(selected_row["deal_id"]), max_chars=2500)
             existing = explanations.get(selected_row["deal_id"], {})
             brief = claude_client.generate_pre_call_brief(selected_row, transcript, model, existing)
             if brief:
@@ -55,13 +53,6 @@ def render(df: pd.DataFrame, explanations: dict, model: str) -> None:
 
     if brief_key in st.session_state:
         _render_brief(st.session_state[brief_key])
-
-
-def _load_transcript(deal_id: str) -> str:
-    matches = list(TRANSCRIPT_DIR.glob(f"{deal_id}_*.txt"))
-    if not matches:
-        return ""
-    return matches[0].read_text(encoding="utf-8")[:2500]
 
 
 def _render_brief(brief: dict) -> None:

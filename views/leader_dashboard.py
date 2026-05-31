@@ -13,8 +13,7 @@ from analytics import (
     compute_proposal_health_rate,
     compute_signal_counts,
 )
-
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
+from constants import HIGH_RISK_THRESHOLD, MEDIUM_RISK_THRESHOLD, OPEN_STAGES
 
 
 def render(df: pd.DataFrame, model: str) -> None:
@@ -90,9 +89,9 @@ def render(df: pd.DataFrame, model: str) -> None:
         rep_stats["Avg Risk"] = rep_stats["Avg Risk"].round(1)
 
         def _bar_color(score):
-            if score >= 70:
+            if score >= HIGH_RISK_THRESHOLD:
                 return "#ef4444"
-            if score >= 40:
+            if score >= MEDIUM_RISK_THRESHOLD:
                 return "#f59e0b"
             return "#22c55e"
 

@@ -1,6 +1,7 @@
 import html
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 from pathlib import Path
 
@@ -11,17 +12,16 @@ import streamlit as st
 import claude_client
 import hubspot_client
 import feedback as feedback_store
+from constants import MIN_BENCHMARK_SAMPLE, OPEN_STAGES, STAGE_THRESHOLDS, TOP_N
+from scoring import compute_risk_breakdown, compute_stage_benchmarks, risk_tier, score_deals
+from transcripts import find_transcript
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 TODAY = date.today()
 SAMPLE_CSV = Path("data/sample/opportunities.csv")
-TRANSCRIPT_DIR = Path("data/sample/transcripts")
 METHODOLOGY_MD = Path("METHODOLOGY.md")
-TOP_N = 10
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
-STAGE_THRESHOLDS = {"Discovery": 14, "Demo": 14, "Proposal": 21, "Negotiation": 21}
 
 # Per-tier expander border styles (dark mode / light mode)
 _TIER_BORDER = {
@@ -29,11 +29,6 @@ _TIER_BORDER = {
     "medium": "border:1px solid #fde68a!important;box-shadow:0 2px 8px rgba(245,158,11,0.08)!important;",
     "low":    "border:1px solid #e2e8f0!important;",
 }
-MIN_BENCHMARK_SAMPLE = 5
-
-
-def _risk_tier(score):
-    return "High" if score >= 70 else "Medium" if score >= 40 else "Low"
 
 
 def _format_pull_timestamp(dt: datetime) -> str:
@@ -46,88 +41,41 @@ def _format_pull_timestamp(dt: datetime) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Cached Claude analysis
 # ---------------------------------------------------------------------------
+# Persist analysis across reruns/refreshes so a page reload doesn't re-pay for
+# the top-10 calls. Keyed on deal_id + model + a fingerprint of the scored
+# fields and transcript, so it re-analyzes only when the inputs actually change.
+# Failures (None) are raised so they are NOT cached — the next run retries.
 
-def find_transcript(deal_id):
-    matches = list(TRANSCRIPT_DIR.glob(f"{deal_id}_*.txt"))
-    return matches[0].read_text(encoding="utf-8") if matches else ""
-
-
-# ---------------------------------------------------------------------------
-# Scoring (unchanged from v1.4)
-# ---------------------------------------------------------------------------
-
-def compute_stage_benchmarks(df):
-    """Compute median days_in_stage per stage from full pipeline history."""
-    benchmarks = dict(STAGE_THRESHOLDS)
-    for stage, group in df.groupby("stage"):
-        if len(group) >= MIN_BENCHMARK_SAMPLE:
-            try:
-                median = int(group["days_in_stage"].median())
-                if median > 0:
-                    benchmarks[stage] = median
-            except (TypeError, ValueError):
-                pass
-    return benchmarks
+class _AnalysisFailed(Exception):
+    pass
 
 
-def compute_risk_breakdown(row, benchmarks=None):
-    """Return (total_score, breakdown_dict) for a deal row."""
-    stage = row.get("stage", "")
-    threshold = (benchmarks or STAGE_THRESHOLDS).get(stage, 14)
+@st.cache_data(show_spinner=False)
+def _cached_analyze(deal_id, model, fingerprint, _row, _transcript):
+    result = claude_client.analyze_deal(_row, _transcript, model)
+    if result is None:
+        raise _AnalysisFailed
+    return result
 
+
+def analyze_fingerprint(row, transcript) -> str:
+    return "|".join(str(x) for x in (
+        row.get("risk_score"), row.get("stage"), row.get("days_in_stage"),
+        row.get("last_activity_date"), row.get("close_date"), len(transcript),
+    ))
+
+
+def cached_analyze(row, transcript, model):
+    """Cached wrapper around claude_client.analyze_deal; returns None on failure."""
     try:
-        days_in = int(row.get("days_in_stage", 0))
-    except (ValueError, TypeError):
-        days_in = 0
-    stage_pts = min(40, int(days_in / threshold * 20))
-
-    try:
-        last_act = date.fromisoformat(str(row["last_activity_date"]))
-        stale = max(0, (TODAY - last_act).days)
-        if stale >= 21:
-            act_pts = 30
-        elif stale >= 14:
-            act_pts = 22
-        elif stale >= 7:
-            act_pts = 14
-        else:
-            act_pts = int(stale / 7 * 14)
-    except (ValueError, TypeError, KeyError):
-        act_pts = 15
-
-    try:
-        close = date.fromisoformat(str(row["close_date"]))
-        days_until = (close - TODAY).days
-        if days_until < 0:
-            close_pts = 30
-        elif days_until < 14:
-            close_pts = 25
-        elif days_until <= 30:
-            close_pts = 15
-        elif days_until <= 60:
-            close_pts = 5
-        else:
-            close_pts = 0
-    except (ValueError, TypeError, KeyError):
-        close_pts = 10
-
-    total = min(100, stage_pts + act_pts + close_pts)
-    return total, {"stage_pts": stage_pts, "act_pts": act_pts, "close_pts": close_pts}
-
-
-def score_deals(df):
-    """Filter to open stages, score all deals, return sorted descending."""
-    benchmarks = compute_stage_benchmarks(df)
-    open_df = df[df["stage"].isin(OPEN_STAGES)].copy()
-    results = open_df.apply(lambda r: compute_risk_breakdown(r.to_dict(), benchmarks), axis=1)
-    open_df["risk_score"]    = results.apply(lambda x: x[0])
-    open_df["_stage_pts"]    = results.apply(lambda x: x[1]["stage_pts"])
-    open_df["_act_pts"]      = results.apply(lambda x: x[1]["act_pts"])
-    open_df["_close_pts"]    = results.apply(lambda x: x[1]["close_pts"])
-    open_df["_stage_median"] = open_df["stage"].map(benchmarks)
-    return open_df.sort_values("risk_score", ascending=False).reset_index(drop=True)
+        return _cached_analyze(
+            str(row["deal_id"]), model, analyze_fingerprint(row, transcript),
+            _row=row, _transcript=transcript,
+        )
+    except _AnalysisFailed:
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -469,7 +417,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
 
     chart_df = filtered.copy()
-    chart_df["Risk Tier"] = chart_df["risk_score"].apply(_risk_tier)
+    chart_df["Risk Tier"] = chart_df["risk_score"].apply(risk_tier)
     chart_df["stage"] = pd.Categorical(chart_df["stage"], categories=_STAGE_ORDER, ordered=True)
 
     pipeline_chart = (
@@ -547,12 +495,27 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
             )
         if analyze:
             st.session_state.explanations = {}
+            rows = [r.to_dict() for _, r in top10.iterrows()]
             with st.status("Analyzing top deals with Claude…", expanded=True) as _status:
-                for _, row in top10.iterrows():
-                    _status.write(f"🔍 {row['account_name']}…")
-                    transcript = _transcripts.get(str(row["deal_id"]), "")
-                    result = claude_client.analyze_deal(row.to_dict(), transcript, ACTIVE_MODEL)
-                    st.session_state.explanations[row["deal_id"]] = result
+                # Warm the cached system prefix with the first deal sequentially,
+                # then fan the rest out concurrently — the warm call populates the
+                # prompt cache so the parallel calls can read it (and it's much
+                # faster than the old one-at-a-time loop either way).
+                def _run(r):
+                    return r["deal_id"], cached_analyze(
+                        r, _transcripts.get(str(r["deal_id"]), ""), ACTIVE_MODEL
+                    )
+
+                if rows:
+                    _status.write(f"🔍 {rows[0]['account_name']}…")
+                    did, result = _run(rows[0])
+                    st.session_state.explanations[did] = result
+
+                if len(rows) > 1:
+                    _status.write(f"🔍 Analyzing {len(rows) - 1} more deals in parallel…")
+                    with ThreadPoolExecutor(max_workers=5) as pool:
+                        for did, result in pool.map(_run, rows[1:]):
+                            st.session_state.explanations[did] = result
                 _status.update(label="Analysis complete", state="complete", expanded=False)
     else:
         st.markdown(
@@ -592,6 +555,37 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         )
 
     # -----------------------------------------------------------------------
+    # Analysis feedback summary (closes the 👍/👎 loop)
+    # -----------------------------------------------------------------------
+    _fb = feedback_store.summarize_feedback()
+    if _fb["total"]:
+        with st.expander(
+            f"📊 Analysis feedback · {_fb['total']} rating{'s' if _fb['total'] != 1 else ''}"
+            + (f" · {_fb['helpful_rate']:.0f}% helpful" if _fb['helpful_rate'] is not None else "")
+        ):
+            cols = st.columns(3)
+            for col, tier in zip(cols, feedback_store.TIERS):
+                stats = _fb["by_tier"][tier]
+                rate = stats["helpful_rate"]
+                value = f"{rate:.0f}%" if rate is not None else "—"
+                col.metric(
+                    f"{tier} confidence",
+                    value,
+                    help=f"{stats['positive']}/{stats['total']} rated helpful.",
+                )
+                # Flag tiers that look like they need prompt tuning.
+                if rate is not None and stats["total"] >= MIN_BENCHMARK_SAMPLE and rate < 50:
+                    col.markdown(
+                        "<span style='color:#b91c1c;font-size:0.75rem;font-weight:600'>"
+                        "⚠ Needs prompt tuning</span>",
+                        unsafe_allow_html=True,
+                    )
+            st.caption(
+                "Helpful rate from 👍/👎 ratings, stored locally. Tiers below 50% with a "
+                f"meaningful sample (≥{MIN_BENCHMARK_SAMPLE}) are flagged for prompt tuning."
+            )
+
+    # -----------------------------------------------------------------------
     # Per-deal expanders
     # -----------------------------------------------------------------------
     st.subheader("Deal Detail")
@@ -608,7 +602,7 @@ Use **✉ Draft follow-up email** to generate a ready-to-send email draft from t
         with st.expander(label, expanded=(rank == 1)):
 
             # Inject risk-tier border via :has() selector scoped to this deal's unique ID
-            _tier_key = _risk_tier(row["risk_score"]).lower()
+            _tier_key = risk_tier(row["risk_score"]).lower()
             _border_css = _TIER_BORDER[_tier_key]
             _safe_id = re.sub(r'[^A-Za-z0-9_-]', '', str(row["deal_id"]))
             st.markdown(

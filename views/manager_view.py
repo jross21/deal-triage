@@ -5,9 +5,7 @@ import pandas as pd
 import streamlit as st
 
 import claude_client
-
-OPEN_STAGES = {"Discovery", "Demo", "Proposal", "Negotiation"}
-HIGH_RISK_THRESHOLD = 60
+from constants import HIGH_RISK_THRESHOLD, OPEN_STAGES
 
 
 def render(df: pd.DataFrame, explanations: dict, model: str) -> None:

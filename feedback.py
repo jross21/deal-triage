@@ -34,3 +34,47 @@ def load_feedback() -> list:
         return json.loads(FEEDBACK_PATH.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return []
+
+
+TIERS = ("High", "Medium", "Low")
+
+
+def summarize_feedback() -> dict:
+    """Aggregate stored feedback into overall and per-tier helpful rates.
+
+    Returns:
+        {
+          "total": int,
+          "positive": int,
+          "helpful_rate": float | None,   # % positive overall, None if no data
+          "by_tier": {
+              "High":   {"total": int, "positive": int, "helpful_rate": float | None},
+              "Medium": {...},
+              "Low":    {...},
+          },
+        }
+    helpful_rate is None when a bucket has no records (avoids a misleading 0%).
+    """
+    records = load_feedback()
+
+    def _rate(positive: int, total: int):
+        return round(positive / total * 100, 1) if total else None
+
+    by_tier = {}
+    for tier in TIERS:
+        tier_records = [r for r in records if r.get("confidence") == tier]
+        pos = sum(1 for r in tier_records if r.get("feedback") == "positive")
+        by_tier[tier] = {
+            "total": len(tier_records),
+            "positive": pos,
+            "helpful_rate": _rate(pos, len(tier_records)),
+        }
+
+    total = len(records)
+    positive = sum(1 for r in records if r.get("feedback") == "positive")
+    return {
+        "total": total,
+        "positive": positive,
+        "helpful_rate": _rate(positive, total),
+        "by_tier": by_tier,
+    }
