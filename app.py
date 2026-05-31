@@ -223,6 +223,7 @@ st.sidebar.markdown(
 source = st.sidebar.radio(
     "source",
     ["🔗 HubSpot", "📁 Upload CSV", "🧪 Sample Data"],
+    index=2,
     label_visibility="collapsed",
     key="data_source",
 )
