@@ -5,6 +5,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+import ui
 import claude_client
 from analytics import (
     compute_at_risk_pipeline,
@@ -17,8 +18,13 @@ from constants import HIGH_RISK_THRESHOLD, MEDIUM_RISK_THRESHOLD, OPEN_STAGES
 
 
 def render(df: pd.DataFrame, model: str) -> None:
-    st.header("Leader View — Win/Loss Signal Intelligence")
-    st.caption("Pattern analysis across the full pipeline. No per-deal calls required.")
+    ui.page_intro(
+        title="Signal Intelligence",
+        what="Patterns across the whole pipeline — the most common risk signals, how risk is spread "
+             "across reps, and a one-paragraph strategic takeaway from Claude.",
+        who="For sales leaders",
+        try_this="scan the charts, then click <b>Refresh Insight</b>.",
+    )
 
     open_df = df[df["stage"].isin(OPEN_STAGES)].copy()
     if open_df.empty:

@@ -5,13 +5,19 @@ import pandas as pd
 import streamlit as st
 
 import claude_client
+import ui
 from constants import OPEN_STAGES
 from transcripts import find_transcript
 
 
 def render(df: pd.DataFrame, explanations: dict, model: str) -> None:
-    st.header("Rep Tools — Pre-Call Brief")
-    st.caption("Select a deal and generate a tailored brief before your next call.")
+    ui.page_intro(
+        title="Pre-Call Brief",
+        what="Pick a deal and Claude builds a brief for your next conversation — recent context, "
+             "open objections, a suggested agenda, and three questions to ask.",
+        who="For account executives",
+        try_this="pick a deal below and click <b>Generate Brief</b>.",
+    )
 
     open_deals = df[df["stage"].isin(OPEN_STAGES)].sort_values("risk_score", ascending=False).reset_index(drop=True)
     if open_deals.empty:
