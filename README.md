@@ -1,5 +1,7 @@
 # Deal Triage
 
+**[Read the case study →](https://julianross.dev/case-studies/deal-triage/)**
+
 B2B SaaS pipeline risk scoring — heuristic signals + Claude analysis for AEs and RevOps managers.
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://deal-triage-julian-ross.streamlit.app)
